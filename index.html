@@ -9,6 +9,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
   <style>
     :root{
       --bg:#fdf6ec;--fg:#3d2c1e;--muted:#8a7562;
@@ -133,22 +134,10 @@
     .kimg{width:100%;max-height:140px;object-fit:cover;cursor:pointer;transition:all .3s;display:block;}
     .kimg:hover{filter:brightness(1.05) saturate(1.1);}
 
-    /* Placeholder gambar gagal dimuat — TAMPILKAN, jangan sembunyikan */
-    .img-placeholder{
-      width:100%;max-height:140px;display:flex;flex-direction:column;
-      align-items:center;justify-content:center;gap:6px;
-      background:linear-gradient(135deg,var(--card2),rgba(46,196,182,.06));
-      color:var(--muted);font-size:11px;font-weight:700;
-      cursor:pointer;transition:all .3s;
-    }
+    .img-placeholder{width:100%;max-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,var(--card2),rgba(46,196,182,.06));color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;transition:all .3s;}
     .img-placeholder i{font-size:24px;color:var(--border);}
     .img-placeholder:hover{background:rgba(46,196,182,.08);}
-    .img-placeholder-modal{
-      width:100%;min-height:120px;display:flex;flex-direction:column;
-      align-items:center;justify-content:center;gap:8px;padding:30px;
-      background:linear-gradient(135deg,var(--card2),rgba(46,196,182,.06));
-      color:var(--muted);font-size:13px;font-weight:700;
-    }
+    .img-placeholder-modal{width:100%;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:30px;background:linear-gradient(135deg,var(--card2),rgba(46,196,182,.06));color:var(--muted);font-size:13px;font-weight:700;}
     .img-placeholder-modal i{font-size:36px;color:var(--border);}
 
     .confirm-del{position:absolute;inset:0;background:rgba(253,246,236,.95);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:20;border-radius:18px;}
@@ -171,6 +160,77 @@
     .drive-step.fail{color:var(--accent2);background:rgba(230,57,70,.08);}
     @keyframes stepPulse{0%,100%{opacity:1;}50%{opacity:.5;}}
 
+    /* ======== FITUR BARU: Like, Komentar, Video, Notifikasi ======== */
+    .like-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--card2);color:var(--muted);transition:all .3s;user-select:none;}
+    .like-btn:hover{border-color:var(--accent2);color:var(--accent2);}
+    .like-btn.liked{background:rgba(230,57,70,.1);border-color:var(--accent2);color:var(--accent2);}
+    .like-btn.liked i{animation:likePop .4s ease;}
+    @keyframes likePop{0%{transform:scale(1);}30%{transform:scale(1.4);}60%{transform:scale(.9);}100%{transform:scale(1);}}
+
+    .comment-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--card2);color:var(--muted);transition:all .3s;}
+    .comment-btn:hover{border-color:var(--blue);color:var(--blue);}
+
+    .video-embed{width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000;margin-top:8px;}
+    .video-embed iframe{width:100%;height:100%;border:none;}
+
+    .video-thumb{position:relative;cursor:pointer;overflow:hidden;border-radius:10px;margin-top:8px;}
+    .video-thumb img{width:100%;max-height:140px;object-fit:cover;display:block;transition:all .3s;}
+    .video-thumb:hover img{filter:brightness(.7);}
+    .video-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+    .video-play span{width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;transition:all .3s;backdrop-filter:blur(4px);}
+    .video-thumb:hover .video-play span{transform:scale(1.15);background:var(--accent2);}
+    .video-duration{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.8);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;}
+
+    .comments-section{border-top:2px solid var(--border);padding-top:12px;margin-top:12px;}
+    .comment-item{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid rgba(240,220,200,.5);}
+    .comment-item:last-child{border-bottom:none;}
+    .comment-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;flex-shrink:0;}
+    .comment-bubble{flex:1;}
+    .comment-name{font-size:11px;font-weight:800;color:var(--fg);}
+    .comment-text{font-size:12px;color:var(--muted);line-height:1.5;margin-top:1px;}
+    .comment-time{font-size:9px;color:var(--border);margin-top:2px;font-weight:600;}
+    .comment-input-row{display:flex;gap:8px;margin-top:10px;}
+    .comment-input-row input{flex:1;padding:10px 14px;border-radius:99px;border:2px solid var(--border);background:var(--card2);color:var(--fg);font-size:12px;font-family:'Nunito',sans-serif;font-weight:600;outline:none;transition:all .3s;}
+    .comment-input-row input:focus{border-color:var(--glow);box-shadow:0 0 0 3px rgba(46,196,182,.12);}
+    .comment-input-row button{width:38px;height:38px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,var(--blue),var(--glow));color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .3s;flex-shrink:0;}
+    .comment-input-row button:hover{transform:scale(1.1);}
+
+    .notif-bell{position:relative;cursor:pointer;width:40px;height:40px;border-radius:12px;border:2px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:16px;transition:all .3s;}
+    .notif-bell:hover{border-color:var(--accent);color:var(--accent);}
+    .notif-badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:99px;background:var(--accent2);color:#fff;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--card);animation:badgePop .3s ease;}
+    @keyframes badgePop{0%{transform:scale(0);}60%{transform:scale(1.2);}100%{transform:scale(1);}}
+
+    .notif-panel{position:absolute;top:48px;right:0;width:320px;max-height:400px;overflow-y:auto;background:var(--card);border:2px solid var(--border);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.12);z-index:60;display:none;}
+    .notif-panel.open{display:block;animation:kanim .3s ease both;}
+    .notif-item{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start;cursor:pointer;transition:all .2s;}
+    .notif-item:hover{background:var(--card2);}
+    .notif-item.unread{background:rgba(255,107,53,.04);}
+    .notif-item.unread::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:6px;}
+    .notif-icon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+    .notif-content{flex:1;min-width:0;}
+    .notif-text{font-size:12px;font-weight:600;color:var(--fg);line-height:1.4;}
+    .notif-text strong{font-weight:800;}
+    .notif-time{font-size:10px;color:var(--muted);margin-top:2px;font-weight:600;}
+    .notif-empty{text-align:center;padding:30px 16px;color:var(--muted);font-size:12px;font-weight:600;}
+    .notif-empty i{font-size:28px;display:block;margin-bottom:8px;color:var(--border);}
+
+    .notif-perm-banner{position:fixed;top:0;left:0;right:0;z-index:400;padding:12px 16px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;transform:translateY(-100%);transition:transform .5s cubic-bezier(.25,.46,.45,.94);font-size:13px;font-weight:700;}
+    .notif-perm-banner.show{transform:translateY(0);}
+    .notif-perm-banner button{padding:6px 16px;border-radius:99px;border:2px solid rgba(255,255,255,.5);background:rgba(255,255,255,.2);color:#fff;font-weight:800;font-size:12px;cursor:pointer;transition:all .3s;backdrop-filter:blur(4px);font-family:'Nunito',sans-serif;}
+    .notif-perm-banner button:hover{background:rgba(255,255,255,.35);}
+
+    .video-url-input{display:flex;gap:8px;align-items:center;}
+    .video-url-input input{flex:1;}
+    .video-url-input button{padding:10px 16px;border-radius:12px;border:none;cursor:pointer;background:var(--blue);color:#fff;font-size:13px;font-weight:700;transition:all .3s;white-space:nowrap;font-family:'Nunito',sans-serif;}
+    .video-url-input button:hover{opacity:.85;}
+    .video-preview-box{margin-top:8px;padding:10px;border-radius:12px;background:var(--card2);border:2px solid var(--border);display:flex;align-items:center;gap:10px;}
+    .video-preview-box i{color:var(--blue);font-size:20px;}
+    .video-preview-box .vp-info{flex:1;min-width:0;}
+    .video-preview-box .vp-url{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;}
+    .video-preview-box .vp-label{font-size:10px;color:var(--glow);font-weight:700;}
+    .video-preview-box button{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:var(--card);color:var(--accent2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .3s;flex-shrink:0;}
+    .video-preview-box button:hover{background:var(--accent2);color:#fff;border-color:var(--accent2);}
+
     ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;} ::-webkit-scrollbar-thumb:hover{background:var(--glow);}
 
     @media(max-width:640px){
@@ -178,10 +238,17 @@
       .fbs{bottom:115px;left:10px;font-size:8px;}
       .rainbow{width:200px;height:100px;}
       .sun{width:55px;height:55px;right:30px;top:20px;}
+      .notif-panel{width:calc(100vw - 32px);right:-8px;}
     }
   </style>
 </head>
 <body>
+
+  <!-- Banner izin notifikasi -->
+  <div class="notif-perm-banner" id="notifBanner">
+    <span><i class="fa-solid fa-bell mr-2"></i>Aktifkan notifikasi agar tidak ketinggalan karya baru dari teman!</span>
+    <button onclick="requestNotifPermission()"><i class="fa-solid fa-check mr-1"></i>Izinkan</button>
+  </div>
 
   <div class="bg-s" id="bgScene">
     <div class="rainbow"></div>
@@ -218,7 +285,7 @@
         <div class="flex items-center justify-between mb-5">
           <div>
             <h2 class="ft font-extrabold text-xl" style="color:var(--fg);">Tulis Karyamu</h2>
-            <p class="text-xs mt-0.5" style="color:var(--muted);font-weight:600;">Puisi, cerita, gambar — apapun karyamu!</p>
+            <p class="text-xs mt-0.5" style="color:var(--muted);font-weight:600;">Puisi, cerita, gambar, video — apapun karyamu!</p>
           </div>
           <button id="closePanelBtn" onclick="clP()" class="w-9 h-9 rounded-full flex items-center justify-center" style="background:var(--card2);color:var(--muted);border:2px solid var(--border);cursor:pointer;font-size:14px;"><i class="fa-solid fa-xmark"></i></button>
         </div>
@@ -255,9 +322,25 @@
             <div class="compress-bar" id="compressBar"><div class="fill" id="compressFill"></div></div>
             <input type="file" id="fI" accept="image/*" style="display:none;" onchange="hF(this)">
           </div>
+          <!-- UPLOAD URL VIDEO BARU -->
+          <div>
+            <label class="text-xs font-bold block mb-1.5" style="color:var(--muted);">URL Video <span style="color:var(--border);">(opsional — YouTube / TikTok / dll)</span></label>
+            <div class="video-url-input">
+              <input type="url" id="iVU" class="ip" placeholder="https://youtube.com/watch?v=..." oninput="previewVideoUrl()">
+              <button type="button" onclick="embedVideoFromUrl()"><i class="fa-solid fa-check mr-1"></i>Validasi</button>
+            </div>
+            <div id="videoPreviewBox" style="display:none;" class="video-preview-box">
+              <i class="fa-solid fa-circle-play"></i>
+              <div class="vp-info">
+                <div class="vp-label"><i class="fa-solid fa-check-circle mr-1"></i>Video siap disematkan</div>
+                <div class="vp-url" id="videoPreviewUrl"></div>
+              </div>
+              <button onclick="clearVideoUrl()" title="Hapus video"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+          </div>
           <div class="p-3 rounded-xl flex items-start gap-3" style="background:rgba(46,196,182,.08);border:2px solid rgba(46,196,182,.2);">
             <i class="fa-solid fa-cloud-arrow-up mt-0.5" style="color:var(--glow);font-size:14px;"></i>
-            <p class="text-xs leading-relaxed" style="color:var(--muted);font-weight:600;">Gambar otomatis tersimpan di <strong style="color:var(--glow);">Google Drive</strong> sebagai arsip permanen. Karya tampil <strong style="color:var(--accent);">7 hari</strong> di mading, lalu otomatis terhapus — tapi gambar tetap aman di Drive Anda.</p>
+            <p class="text-xs leading-relaxed" style="color:var(--muted);font-weight:600;">Gambar otomatis tersimpan di <strong style="color:var(--glow);">Google Drive</strong> sebagai arsip permanen. Video hanya menyimpan URL-nya. Karya tampil <strong style="color:var(--accent);">7 hari</strong> di mading.</p>
           </div>
           <button class="bs w-full" id="bS" onclick="subK()">
             <i class="fa-solid fa-paper-plane" id="bSI"></i>
@@ -279,6 +362,22 @@
           </div>
         </div>
         <div class="flex items-center gap-3">
+          <!-- Notifikasi Bell -->
+          <div style="position:relative;" id="notifWrap">
+            <div class="notif-bell" id="notifBell" onclick="toggleNotifPanel()">
+              <i class="fa-solid fa-bell"></i>
+              <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
+            </div>
+            <div class="notif-panel" id="notifPanel">
+              <div style="padding:12px 16px;border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:between;">
+                <span class="ft font-extrabold text-sm" style="flex:1;color:var(--fg);">Notifikasi</span>
+                <button onclick="markAllRead()" style="font-size:10px;color:var(--blue);font-weight:700;background:none;border:none;cursor:pointer;font-family:'Nunito',sans-serif;">Tandai semua dibaca</button>
+              </div>
+              <div id="notifList">
+                <div class="notif-empty"><i class="fa-solid fa-bell-slash"></i>Belum ada notifikasi</div>
+              </div>
+            </div>
+          </div>
           <div class="text-right hidden sm:block">
             <div class="text-xs font-bold" style="color:var(--fg);" id="dS"></div>
             <div class="text-[10px] font-bold" style="color:var(--muted);" id="dD"></div>
@@ -323,13 +422,13 @@
 
 <script>
 /* ==============================================
-   URL GOOGLE APPS SCRIPT
+   KONFIGURASI
    ============================================== */
 var DRIVE_API_URL = 'https://script.google.com/macros/s/AKfycbwIpYou2OLe7Vlve3ELJmBwG-1NA2APRXh1YlHkaFj_miHJjgqaqBgEHLqg-1xNnTel5A/exec';
 
-/* ==============================================
-   FIREBASE CONFIG
-   ============================================== */
+/* VAPID Key — ganti dengan VAPID key kamu dari Firebase Console > Project Settings > Cloud Messaging */
+var VAPID_KEY = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkOsOHTZqNFg0F1BZYjNbFoE4SC6KzTlqJmflBnHJ0s';
+
 var fc = {
   apiKey:"AIzaSyCtdIHQwf9PYMCweYrgpocR6MdCn-nTLKQ",
   authDomain:"mading-digital-de6d7.firebaseapp.com",
@@ -340,112 +439,101 @@ var fc = {
   measurementId:"G-43B7EB7XV8"
 };
 
-var db = null, fbOk = false;
+var db = null, messaging = null, fbOk = false;
 var KL = [];
 var sCat = '', sFile = null, sFileBase64 = null, cFilter = 'semua';
 var isSubmitting = false;
+var sVideoUrl = ''; /* URL video yang divalidasi */
+var sVideoEmbed = ''; /* kode embed iframe */
+
+/* Like & komentar state lokal */
+var likedItems = {}; /* { karyaId: true } disimpan di localStorage */
+var openCommentId = null; /* ID karya yang komentarnya sedang ditampilkan di modal */
+
+/* Notifikasi */
+var notifications = []; /* { id, type, text, time, read, karyaId } */
+var notifPanelOpen = false;
+var lastKnownCount = 0;
+
+/* Muat state like dari localStorage */
+try {
+  var savedLikes = localStorage.getItem('mading_likes');
+  if (savedLikes) likedItems = JSON.parse(savedLikes);
+  var savedNotifs = localStorage.getItem('mading_notifs');
+  if (savedNotifs) notifications = JSON.parse(savedNotifs);
+} catch(e) {}
+
+function saveLikes() {
+  try { localStorage.setItem('mading_likes', JSON.stringify(likedItems)); } catch(e) {}
+}
+function saveNotifs() {
+  try { localStorage.setItem('mading_notifs', JSON.stringify(notifications)); } catch(e) {}
+}
 
 /* ==============================================
-   UTILITAS VALIDASI URL GAMBAR
-   Memastikan URL yang disimpan benar-benar bisa ditampilkan
+   VALIDASI URL GAMBAR
    ============================================== */
 function isValidImageUrl(url) {
   if (!url || typeof url !== 'string') return false;
-  var trimmed = url.trim();
-  /* Base64 data URL */
-  if (trimmed.indexOf('data:image/') === 0) return true;
-  /* URL Google Drive (langsung atau via redirect) */
-  if (trimmed.indexOf('https://drive.google.com') === 0) return true;
-  if (trimmed.indexOf('https://lh3.googleusercontent.com') === 0) return true;
-  if (trimmed.indexOf('https://docs.google.com') === 0) return true;
-  /* URL gambar lain yang umum */
-  if (trimmed.match(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?.*)?$/i)) return true;
-  /* URL dengan parameter gambar */
-  if (trimmed.indexOf('https://') === 0 && trimmed.length > 15) return true;
-  /* Terlalu pendek = pasti bukan URL gambar valid */
-  if (trimmed.length < 20) return false;
+  var t = url.trim();
+  if (t.indexOf('data:image/') === 0) return true;
+  if (t.indexOf('https://drive.google.com') === 0) return true;
+  if (t.indexOf('https://lh3.googleusercontent.com') === 0) return true;
+  if (t.indexOf('https://docs.google.com') === 0) return true;
+  if (t.match(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?.*)?$/i)) return true;
+  if (t.indexOf('https://') === 0 && t.length > 15) return true;
+  if (t.length < 20) return false;
   return true;
 }
 
-/* Cek apakah URL ini Google Drive yang butuh proxy */
-function isDriveUrl(url) {
-  if (!url) return false;
-  return url.indexOf('drive.google.com') !== -1 || url.indexOf('docs.google.com') !== -1;
-}
-
 /* ==============================================
-   TAMPILKAN GAMBAR DENGAN FALLBACK
-   Fungsi ini MEMASTIKAN gambar selalu tampil,
-   jika gagal → tampilkan placeholder, BUKAN hilang
+   RENDER GAMBAR DENGAN FALLBACK
    ============================================== */
 function renderImage(url, alt, cssClass, index) {
   if (!isValidImageUrl(url)) {
-    /* Data tidak valid → langsung tampilkan placeholder */
-    return '<div class="' + cssClass + '" onclick="opR(' + index + ')">' +
-      '<i class="fa-solid fa-image-slash"></i>' +
-      '<span>Gambar tidak tersedia</span></div>';
+    return '<div class="' + cssClass + '" onclick="opR(' + index + ')"><i class="fa-solid fa-image"></i><span>Gambar tidak tersedia</span></div>';
   }
-
-  /* Gunakan ID unik supaya onerror bisa menemukan elemennya */
   var imgId = 'img_' + index + '_' + Date.now();
   var fallbackId = 'fb_' + index + '_' + Date.now();
-
   return '<div style="position:relative;">' +
     '<img id="' + imgId + '" src="' + url + '" alt="' + (alt || 'Gambar') + '" class="' + cssClass + '" onclick="opR(' + index + ')" loading="lazy" style="display:block;" ' +
     'onerror="handleImgError(\'' + imgId + '\',\'' + fallbackId + '\',' + index + ')">' +
     '<div id="' + fallbackId + '" class="img-placeholder" style="display:none;" onclick="opR(' + index + ')">' +
-    '<i class="fa-solid fa-image"></i>' +
-    '<span>Gambar gagal dimuat</span>' +
-    '<span style="font-size:9px;color:var(--accent);">Klik untuk detail</span></div></div>';
+    '<i class="fa-solid fa-image"></i><span>Gambar gagal dimuat</span><span style="font-size:9px;color:var(--accent);">Klik untuk detail</span></div></div>';
 }
 
-/* Handler error gambar — TAMPILKAN placeholder, jangan sembunyikan */
 function handleImgError(imgId, fallbackId, index) {
   var img = document.getElementById(imgId);
   var fb = document.getElementById(fallbackId);
   if (img) {
     img.style.display = 'none';
-    /* Coba retry sekali lagi dengan delay (kadang CDN lambat) */
     var origSrc = img.getAttribute('src');
     if (origSrc && !img.getAttribute('data-retried')) {
       img.setAttribute('data-retried', '1');
       setTimeout(function() {
         var testImg = new Image();
-        testImg.onload = function() {
-          img.src = origSrc;
-          img.style.display = 'block';
-          if (fb) fb.style.display = 'none';
-        };
-        testImg.onerror = function() {
-          /* Benar-benar gagal → tampilkan placeholder */
-          if (fb) fb.style.display = 'flex';
-        };
+        testImg.onload = function() { img.src = origSrc; img.style.display = 'block'; if (fb) fb.style.display = 'none'; };
+        testImg.onerror = function() { if (fb) fb.style.display = 'flex'; };
         testImg.src = origSrc + (origSrc.indexOf('?') !== -1 ? '&' : '?') + '_retry=' + Date.now();
       }, 1500);
-    } else {
-      /* Sudah di-retry, tetap gagal */
-      if (fb) fb.style.display = 'flex';
-    }
+    } else { if (fb) fb.style.display = 'flex'; }
   }
 }
 
-/* Render gambar untuk modal (lebih besar) */
 function renderModalImage(url, alt) {
   if (!isValidImageUrl(url)) {
     return '<div class="img-placeholder-modal"><i class="fa-solid fa-image"></i><span>Gambar tidak tersedia</span></div>';
   }
-  var modalImgId = 'modal_img_' + Date.now();
-  var modalFbId = 'modal_fb_' + Date.now();
+  var mid = 'modal_img_' + Date.now(), mfb = 'modal_fb_' + Date.now();
   return '<div style="position:relative;">' +
-    '<img id="' + modalImgId + '" src="' + url + '" alt="' + (alt || 'Gambar') + '" style="width:100%;max-height:220px;object-fit:cover;border-radius:20px 20px 0 0;display:block;" ' +
-    'onerror="handleModalImgError(\'' + modalImgId + '\',\'' + modalFbId + '\')">' +
-    '<div id="' + modalFbId + '" class="img-placeholder-modal" style="display:none;border-radius:20px 20px 0 0;">' +
+    '<img id="' + mid + '" src="' + url + '" alt="' + (alt || 'Gambar') + '" style="width:100%;max-height:220px;object-fit:cover;border-radius:20px 20px 0 0;display:block;" ' +
+    'onerror="handleModalImgError(\'' + mid + '\',\'' + mfb + '\')">' +
+    '<div id="' + mfb + '" class="img-placeholder-modal" style="display:none;border-radius:20px 20px 0 0;">' +
     '<i class="fa-solid fa-image"></i><span>Gambar gagal dimuat</span></div></div>';
 }
 
 function handleModalImgError(imgId, fallbackId) {
-  var img = document.getElementById(imgId);
-  var fb = document.getElementById(fallbackId);
+  var img = document.getElementById(imgId), fb = document.getElementById(fallbackId);
   if (img) {
     img.style.display = 'none';
     var origSrc = img.getAttribute('src');
@@ -453,21 +541,280 @@ function handleModalImgError(imgId, fallbackId) {
       img.setAttribute('data-retried', '1');
       setTimeout(function() {
         var testImg = new Image();
-        testImg.onload = function() {
-          img.src = origSrc;
-          img.style.display = 'block';
-          if (fb) fb.style.display = 'none';
-        };
-        testImg.onerror = function() {
-          if (fb) fb.style.display = 'flex';
-        };
+        testImg.onload = function() { img.src = origSrc; img.style.display = 'block'; if (fb) fb.style.display = 'none'; };
+        testImg.onerror = function() { if (fb) fb.style.display = 'flex'; };
         testImg.src = origSrc + (origSrc.indexOf('?') !== -1 ? '&' : '?') + '_r=' + Date.now();
       }, 1500);
-    } else {
-      if (fb) fb.style.display = 'flex';
-    }
+    } else { if (fb) fb.style.display = 'flex'; }
   }
 }
+
+/* ==============================================
+   VIDEO: Ekstrak embed URL dari berbagai platform
+   ============================================== */
+function extractVideoEmbed(url) {
+  if (!url) return '';
+  url = url.trim();
+
+  /* YouTube: berbagai format URL */
+  var ytMatch = url.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (ytMatch) return 'https://www.youtube.com/embed/' + ytMatch[1];
+
+  /* TikTok embed */
+  if (url.indexOf('tiktok.com') !== -1) {
+    var ttMatch = url.match(/video\/(\d+)/);
+    if (ttMatch) return 'https://www.tiktok.com/embed/v2/' + ttMatch[1];
+    return ''; /* TikTok lain tidak selalu bisa di-embed */
+  }
+
+  /* Instagram Reels */
+  if (url.indexOf('instagram.com') !== -1) {
+    var igMatch = url.match(/\/reel\/([a-zA-Z0-9_-]+)/);
+    if (igMatch) return 'https://www.instagram.com/reel/' + igMatch[1] + '/embed/';
+  }
+
+  /* Vimeo */
+  var vmMatch = url.match(/(?:https?:\/\/)?(?:www\.)?vimeo\.com\/(\d+)/);
+  if (vmMatch) return 'https://player.vimeo.com/video/' + vmMatch[1];
+
+  /* Sudah berupa embed URL */
+  if (url.indexOf('/embed/') !== -1) return url;
+
+  return '';
+}
+
+function getVideoPlatform(url) {
+  if (!url) return '';
+  if (url.indexOf('youtube.com') !== -1 || url.indexOf('youtu.be') !== -1) return 'YouTube';
+  if (url.indexOf('tiktok.com') !== -1) return 'TikTok';
+  if (url.indexOf('instagram.com') !== -1) return 'Instagram';
+  if (url.indexOf('vimeo.com') !== -1) return 'Vimeo';
+  return 'Video';
+}
+
+function previewVideoUrl() {
+  /* Auto-preview saat user mengetik */
+}
+
+function embedVideoFromUrl() {
+  var url = document.getElementById('iVU').value.trim();
+  if (!url) { tst('Masukkan URL video terlebih dahulu', 'er'); return; }
+  var embed = extractVideoEmbed(url);
+  if (!embed) {
+    tst('URL video tidak dikenali. Coba link YouTube, TikTok, atau Vimeo.', 'er');
+    return;
+  }
+  sVideoUrl = url;
+  sVideoEmbed = embed;
+  document.getElementById('videoPreviewUrl').textContent = url;
+  document.getElementById('videoPreviewBox').style.display = 'flex';
+  tst('Video ' + getVideoPlatform(url) + ' siap disematkan!', 'ok');
+}
+
+function clearVideoUrl() {
+  sVideoUrl = '';
+  sVideoEmbed = '';
+  document.getElementById('iVU').value = '';
+  document.getElementById('videoPreviewBox').style.display = 'none';
+}
+
+/* Render video thumbnail di card */
+function renderVideoCard(embedUrl, platform) {
+  if (!embedUrl) return '';
+  var ytId = embedUrl.match(/embed\/([a-zA-Z0-9_-]+)/);
+  var thumb = ytId ? 'https://img.youtube.com/vi/' + ytId[1] + '/hqdefault.jpg' : '';
+  var platformColor = platform === 'YouTube' ? '#ff0000' : platform === 'TikTok' ? '#000' : platform === 'Instagram' ? '#e1306c' : 'var(--blue)';
+
+  if (thumb) {
+    return '<div class="video-thumb" onclick="playCardVideo(this, \'' + embedUrl.replace(/'/g, "\\'") + '\')">' +
+      '<img src="' + thumb + '" alt="Video thumbnail" loading="lazy">' +
+      '<div class="video-play"><span><i class="fa-solid fa-play" style="margin-left:2px;"></i></span></div>' +
+      '<span class="video-duration" style="background:' + platformColor + ';">' + platform + '</span></div>';
+  }
+  return '<div style="padding:10px;border-radius:10px;background:var(--card2);border:1.5px solid var(--border);display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:8px;" onclick="playCardVideo(this, \'' + embedUrl.replace(/'/g, "\\'") + '\')">' +
+    '<i class="fa-solid fa-circle-play" style="color:' + platformColor + ';font-size:20px;"></i>' +
+    '<span style="font-size:11px;font-weight:700;color:var(--muted);">Tonton video ' + platform + '</span></div>';
+}
+
+function playCardVideo(el, embedUrl) {
+  /* Ganti thumbnail dengan iframe */
+  var parent = el.parentNode;
+  var div = document.createElement('div');
+  div.className = 'video-embed';
+  div.innerHTML = '<iframe src="' + embedUrl + '?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe>';
+  parent.replaceChild(div, el);
+}
+
+/* ==============================================
+   NOTIFIKASI PUSH (Firebase Cloud Messaging)
+   ============================================== */
+function initMessaging() {
+  try {
+    messaging = firebase.messaging();
+    /* Cek apakah sudah pernah izinkan */
+    if (Notification.permission === 'granted') {
+      getAndSaveToken();
+    } else if (Notification.permission === 'default') {
+      /* Tampilkan banner setelah 3 detik */
+      setTimeout(function() {
+        if (Notification.permission === 'default') {
+          document.getElementById('notifBanner').classList.add('show');
+          /* Sembunyikan setelah 15 detik jika tidak di-klik */
+          setTimeout(function() {
+            document.getElementById('notifBanner').classList.remove('show');
+          }, 15000);
+        }
+      }, 3000);
+    }
+
+    /* Listener untuk notifikasi saat app foreground */
+    messaging.onMessage(function(payload) {
+      console.log('Notifikasi diterima (foreground):', payload);
+      var data = payload.data || {};
+      var title = data.title || 'Mading Digital';
+      var body = data.body || 'Ada karya baru!';
+      /* Tampilkan notifikasi in-app */
+      addNotification('new_karya', body, data.karyaId);
+      tst(body, 'ok');
+    });
+  } catch(e) {
+    console.warn('Messaging tidak tersedia:', e);
+  }
+}
+
+async function requestNotifPermission() {
+  document.getElementById('notifBanner').classList.remove('show');
+  try {
+    if (!messaging) {
+      tst('Fitur notifikasi belum tersedia', 'er');
+      return;
+    }
+    var permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      await getAndSaveToken();
+      tst('Notifikasi aktif! Kamu akan diberitahu jika ada karya baru.', 'ok');
+    } else {
+      tst('Izin notifikasi ditolak. Kamu bisa mengaktifkannya lewat pengaturan browser.', 'er');
+    }
+  } catch(e) {
+    console.error('Gagal request notifikasi:', e);
+    tst('Gagal mengaktifkan notifikasi', 'er');
+  }
+}
+
+async function getAndSaveToken() {
+  try {
+    var token = await messaging.getToken({ vapidKey: VAPID_KEY });
+    console.log('FCM Token:', token);
+    /* Simpan token ke Firebase agar server bisa kirim notifikasi */
+    if (db) {
+      db.ref('fcm_tokens/' + token.replace(/[^a-zA-Z0-9]/g, '_')).set({
+        token: token,
+        updatedAt: Date.now(),
+        userAgent: navigator.userAgent.substring(0, 100)
+      });
+    }
+  } catch(e) {
+    console.warn('Gagal mendapatkan FCM token:', e);
+  }
+}
+
+/* ==============================================
+   NOTIFIKASI IN-APP (selalu aktif, tidak perlu FCM)
+   ============================================== */
+function addNotification(type, text, karyaId) {
+  var notif = {
+    id: 'n_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+    type: type,
+    text: text,
+    karyaId: karyaId || '',
+    time: Date.now(),
+    read: false
+  };
+  notifications.unshift(notif);
+  /* Batasi maksimal 50 notifikasi */
+  if (notifications.length > 50) notifications = notifications.slice(0, 50);
+  saveNotifs();
+  updateNotifBadge();
+  renderNotifList();
+}
+
+function updateNotifBadge() {
+  var unread = notifications.filter(function(n) { return !n.read; }).length;
+  var badge = document.getElementById('notifBadge');
+  if (unread > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = unread > 99 ? '99+' : unread;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function renderNotifList() {
+  var list = document.getElementById('notifList');
+  if (notifications.length === 0) {
+    list.innerHTML = '<div class="notif-empty"><i class="fa-solid fa-bell-slash"></i>Belum ada notifikasi</div>';
+    return;
+  }
+  var html = '';
+  var shown = notifications.slice(0, 20);
+  shown.forEach(function(n) {
+    var iconBg, iconClass;
+    switch(n.type) {
+      case 'new_karya': iconBg = 'rgba(255,107,53,.12)'; iconClass = 'fa-solid fa-pen-fancy'; iconColor = 'var(--accent)'; break;
+      case 'like': iconBg = 'rgba(230,57,70,.12)'; iconClass = 'fa-solid fa-heart'; iconColor = 'var(--accent2)'; break;
+      case 'comment': iconBg = 'rgba(17,138,178,.12)'; iconClass = 'fa-solid fa-comment'; iconColor = 'var(--blue)'; break;
+      default: iconBg = 'rgba(46,196,182,.12)'; iconClass = 'fa-solid fa-bell'; iconColor = 'var(--glow)';
+    }
+    html += '<div class="notif-item ' + (n.read ? '' : 'unread') + '" onclick="clickNotif(\'' + n.id + '\',\'' + (n.karyaId || '') + '\')">' +
+      '<div class="notif-icon" style="background:' + iconBg + ';color:' + iconColor + ';"><i class="' + iconClass + '"></i></div>' +
+      '<div class="notif-content"><div class="notif-text">' + n.text + '</div><div class="notif-time">' + tAgo(n.time) + '</div></div></div>';
+  });
+  list.innerHTML = html;
+}
+
+function toggleNotifPanel() {
+  notifPanelOpen = !notifPanelOpen;
+  var panel = document.getElementById('notifPanel');
+  if (notifPanelOpen) {
+    panel.classList.add('open');
+  } else {
+    panel.classList.remove('open');
+  }
+}
+
+function markAllRead() {
+  notifications.forEach(function(n) { n.read = true; });
+  saveNotifs();
+  updateNotifBadge();
+  renderNotifList();
+}
+
+function clickNotif(notifId, karyaId) {
+  /* Tandai dibaca */
+  var n = notifications.find(function(x) { return x.id === notifId; });
+  if (n) n.read = true;
+  saveNotifs();
+  updateNotifBadge();
+  renderNotifList();
+  notifPanelOpen = false;
+  document.getElementById('notifPanel').classList.remove('open');
+
+  /* Jika ada karyaId, buka modal karya tersebut */
+  if (karyaId) {
+    var idx = KL.findIndex(function(k) { return k.id === karyaId; });
+    if (idx !== -1) opR(idx);
+  }
+}
+
+/* Tutup panel notifikasi jika klik di luar */
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('notifWrap');
+  if (notifPanelOpen && wrap && !wrap.contains(e.target)) {
+    notifPanelOpen = false;
+    document.getElementById('notifPanel').classList.remove('open');
+  }
+});
 
 /* ==============================================
    FIREBASE INIT
@@ -479,26 +826,80 @@ try {
   db.ref('.info/connected').on('value', function(s) {
     fbOk = s.val() === true;
     sFS(fbOk ? 'on' : 'of', fbOk ? 'Terhubung' : 'Offline — cek koneksi');
-    if (fbOk) tst('Firebase terhubung!', 'ok');
+    if (fbOk) {
+      tst('Firebase terhubung!', 'ok');
+      initMessaging();
+    }
   });
 
   db.ref('karya').orderByChild('timestamp').on('value', function(snap) {
     var d = snap.val();
-    KL = [];
+    var newKL = [];
     if (d) {
       Object.keys(d).forEach(function(k) {
         var v = d[k];
         var age = Date.now() - v.timestamp;
         if (age < 7 * 24 * 60 * 60 * 1000) {
-          KL.push({ id: k, ...v });
+          newKL.push({ id: k, ...v });
         } else {
           db.ref('karya/' + k).remove().catch(function() {});
         }
       });
     }
-    KL.sort(function(a, b) { return b.timestamp - a.timestamp; });
+    newKL.sort(function(a, b) { return b.timestamp - a.timestamp; });
+
+    /* Deteksi karya baru untuk notifikasi */
+    if (KL.length > 0 && newKL.length > 0) {
+      var oldIds = KL.map(function(k) { return k.id; });
+      newKL.forEach(function(nk) {
+        if (oldIds.indexOf(nk.id) === -1) {
+          /* Karya baru terdeteksi! */
+          var txt = '<strong>' + escHtml(nk.nama) + '</strong> menulis karya baru';
+          if (nk.kategori) txt += ' di kategori ' + (cL[nk.kategori] || nk.kategori);
+          if (nk.judul) txt += ': "' + escHtml(nk.judul) + '"';
+          addNotification('new_karya', txt, nk.id);
+
+          /* Kirim notifikasi push jika FCM tersedia */
+          if (messaging && Notification.permission === 'granted') {
+            /* Notifikasi push akan dikirim via onMessage listener atau background service worker */
+          }
+        }
+      });
+    } else if (KL.length === 0 && newKL.length > 0) {
+      /* Karya pertama kali dimuat, tidak perlu notifikasi */
+    }
+
+    KL = newKL;
     rK();
   });
+
+  /* Listener untuk likes real-time */
+  db.ref('likes').on('value', function(snap) {
+    /* Update tampilan like tanpa re-render penuh */
+    var likesData = snap.val() || {};
+    document.querySelectorAll('.like-count-display').forEach(function(el) {
+      var kid = el.getAttribute('data-kid');
+      if (kid && likesData[kid]) {
+        el.textContent = Object.keys(likesData[kid]).length;
+      } else if (kid) {
+        el.textContent = '0';
+      }
+    });
+  });
+
+  /* Listener untuk komentar real-time */
+  db.ref('comments').on('value', function(snap) {
+    /* Update komentar yang sedang terbuka di modal */
+    if (openCommentId) {
+      var commentsData = snap.val() || {};
+      var kComments = commentsData[openCommentId] || {};
+      var commentList = document.getElementById('modalCommentList');
+      if (commentList) {
+        renderModalComments(commentList, kComments, openCommentId);
+      }
+    }
+  });
+
 } catch (e) {
   console.warn('Firebase init error:', e);
   sFS('of', 'Firebase tidak tersedia');
@@ -509,29 +910,17 @@ try {
    ============================================== */
 async function uploadToDrive(base64Image, fileName) {
   try {
-    /* Pastikan base64 bersih — hapus prefix data:image/... kalau ada */
-    var cleanBase64 = base64Image;
-    if (base64Image.indexOf('data:image/') === 0) {
-      cleanBase64 = base64Image;
-    }
-
     var resp = await fetch(DRIVE_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({
-        image: cleanBase64,
-        fileName: fileName,
-        mimeType: 'image/jpeg'
-      })
+      body: JSON.stringify({ image: base64Image, fileName: fileName, mimeType: 'image/jpeg' })
     });
     var result = await resp.json();
     if (result.success && result.url) {
       console.log('Upload ke Drive berhasil:', result.url);
       return result.url;
-    } else {
-      console.warn('Upload Drive gagal:', result.error || 'Tidak ada URL');
-      return null;
     }
+    return null;
   } catch (err) {
     console.warn('Upload Drive error:', err);
     return null;
@@ -541,6 +930,13 @@ async function uploadToDrive(base64Image, fileName) {
 /* ==============================================
    UTILITAS UMUM
    ============================================== */
+function escHtml(s) {
+  if (!s) return '';
+  var div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
 function sFS(s, t) {
   var el = document.getElementById('fbs');
   el.className = 'fbs ' + s;
@@ -579,8 +975,6 @@ var cI = { puisi: 'fa-feather', cerita: 'fa-book-open', opini: 'fa-comment-dots'
 
 /* ==============================================
    KOMPRESI GAMBAR
-   Untuk Firebase: ukuran kecil (500px, 0.6) biar muat
-   Untuk Drive: ukuran sedang (800px, 0.8) untuk kualitas arsip
    ============================================== */
 function kompresiGambar(file, maxW, quality) {
   return new Promise(function(resolve, reject) {
@@ -591,18 +985,12 @@ function kompresiGambar(file, maxW, quality) {
         var w = img.width, h = img.height;
         if (w > maxW) { h = Math.round(h * (maxW / w)); w = maxW; }
         var canvas = document.createElement('canvas');
-        canvas.width = Math.max(1, w);
-        canvas.height = Math.max(1, h);
+        canvas.width = Math.max(1, w); canvas.height = Math.max(1, h);
         var ctx = canvas.getContext('2d');
-        /* Gunakan white background untuk gambar PNG transparan */
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         var result = canvas.toDataURL('image/jpeg', quality);
-        if (!result || result === 'data:,') {
-          reject(new Error('Kompresi menghasilkan data kosong'));
-          return;
-        }
+        if (!result || result === 'data:,') { reject(new Error('Kompresi gagal')); return; }
         resolve(result);
       };
       img.onerror = function() { reject(new Error('Gagal memuat gambar')); };
@@ -620,7 +1008,6 @@ function cAnimasi() {
   var bg = document.getElementById('bgScene');
   var colors = ['var(--pink)', 'var(--accent)', 'var(--yellow)', 'var(--glow)', 'var(--blue)', 'var(--purple)'];
   var emojis = ['\u2B50', '\uD83C\uDF38', '\uD83E\uDD8B', '\uD83C\uDF08', '\uD83C\uDF4E', '\uD83C\uDF88', '\uD83C\uDF3C', '\uD83C\uDF41', '\u2601\uFE0F', '\uD83D\uDCAB', '\uD83C\uDF3B', '\uD83C\uDF31'];
-
   for (var i = 0; i < 5; i++) {
     var b = document.createElement('div'); b.className = 'balloon';
     b.style.left = (8 + Math.random() * 84) + '%';
@@ -654,7 +1041,147 @@ function cAnimasi() {
 }
 
 /* ==============================================
-   PANEL
+   LIKE: Toggle like dengan animasi
+   ============================================== */
+function toggleLike(karyaId, event) {
+  if (event) event.stopPropagation();
+  if (!db) { tst('Tidak terhubung ke database', 'er'); return; }
+
+  var likeRef = db.ref('likes/' + karyaId + '/_' + generateLocalId());
+
+  if (likedItems[karyaId]) {
+    /* Unlike */
+    likeRef.remove().then(function() {
+      delete likedItems[karyaId];
+      saveLikes();
+      updateLikeUI(karyaId, false);
+    }).catch(function(e) { console.error('Unlike error:', e); });
+  } else {
+    /* Like */
+    likeRef.set({ t: Date.now() }).then(function() {
+      likedItems[karyaId] = true;
+      saveLikes();
+      updateLikeUI(karyaId, true);
+
+      /* Buat partikel hati */
+      if (event) {
+        var btn = event.currentTarget || event.target.closest('.like-btn');
+        if (btn) spawnHearts(btn);
+      }
+    }).catch(function(e) { console.error('Like error:', e); });
+  }
+}
+
+function updateLikeUI(karyaId, isLiked) {
+  /* Update semua tombol like untuk karya ini */
+  document.querySelectorAll('.like-btn[data-kid="' + karyaId + '"]').forEach(function(btn) {
+    if (isLiked) {
+      btn.classList.add('liked');
+      btn.querySelector('i').className = 'fa-solid fa-heart';
+    } else {
+      btn.classList.remove('liked');
+      btn.querySelector('i').className = 'fa-regular fa-heart';
+    }
+  });
+  /* Update count */
+  if (db) {
+    db.ref('likes/' + karyaId).once('value', function(snap) {
+      var count = snap.val() ? Object.keys(snap.val()).length : 0;
+      document.querySelectorAll('.like-count-display[data-kid="' + karyaId + '"]').forEach(function(el) {
+        el.textContent = count;
+      });
+    });
+  }
+}
+
+function spawnHearts(btn) {
+  var rect = btn.getBoundingClientRect();
+  for (var i = 0; i < 6; i++) {
+    var heart = document.createElement('div');
+    heart.innerHTML = '<i class="fa-solid fa-heart"></i>';
+    heart.style.cssText = 'position:fixed;z-index:999;color:var(--accent2);font-size:' + (10 + Math.random() * 10) + 'px;pointer-events:none;left:' + (rect.left + rect.width / 2 + (Math.random() - 0.5) * 30) + 'px;top:' + rect.top + 'px;opacity:1;transition:all .8s ease-out;';
+    document.body.appendChild(heart);
+    requestAnimationFrame(function() {
+      heart.style.transform = 'translateY(-' + (30 + Math.random() * 40) + 'px) rotate(' + (Math.random() * 40 - 20) + 'deg) scale(' + (0.5 + Math.random()) + ')';
+      heart.style.opacity = '0';
+    });
+    setTimeout(function() { heart.remove(); }, 900);
+  }
+}
+
+/* ID lokal unik untuk like (berdasarkan fingerprint sederhana) */
+var localId = null;
+function generateLocalId() {
+  if (localId) return localId;
+  var id = localStorage.getItem('mading_uid');
+  if (!id) {
+    id = 'u_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+    localStorage.setItem('mading_uid', id);
+  }
+  localId = id.replace(/[^a-zA-Z0-9_]/g, '_');
+  return localId;
+}
+
+/* ==============================================
+   KOMENTAR: Kirim & render
+   ============================================== */
+function sendComment(karyaId) {
+  if (!db) { tst('Tidak terhubung ke database', 'er'); return; }
+  var input = document.getElementById('commentInput_' + karyaId);
+  if (!input) return;
+  var text = input.value.trim();
+  if (!text) { tst('Tulis komentar dulu', 'er'); input.focus(); return; }
+  if (text.length > 500) { tst('Komentar maksimal 500 karakter', 'er'); return; }
+
+  var namaInput = document.getElementById('iN');
+  var nama = namaInput ? namaInput.value.trim() : '';
+  if (!nama) nama = 'Anonim';
+
+  var commentData = {
+    nama: nama,
+    teks: text,
+    timestamp: Date.now(),
+    uid: generateLocalId()
+  };
+
+  db.ref('comments/' + karyaId).push(commentData).then(function() {
+    input.value = '';
+    tst('Komentar terkirim!', 'ok');
+  }).catch(function(e) {
+    console.error('Komentar error:', e);
+    tst('Gagal mengirim komentar', 'er');
+  });
+}
+
+function renderModalComments(container, kComments, karyaId) {
+  var keys = Object.keys(kComments);
+  if (keys.length === 0) {
+    container.innerHTML = '<p style="text-align:center;color:var(--muted);font-size:12px;font-weight:600;padding:8px 0;">Belum ada komentar. Jadilah yang pertama!</p>';
+    return;
+  }
+  keys.sort(function(a, b) { return kComments[a].timestamp - kComments[b].timestamp; });
+  var html = '';
+  keys.forEach(function(ck) {
+    var c = kComments[ck];
+    var avatarColor = gAC(c.nama || 'Anonim');
+    html += '<div class="comment-item">' +
+      '<div class="comment-avatar" style="background:' + avatarColor + ';">' + gI(c.nama || 'A') + '</div>' +
+      '<div class="comment-bubble">' +
+      '<div class="comment-name">' + escHtml(c.nama || 'Anonim') + '</div>' +
+      '<div class="comment-text">' + escHtml(c.teks) + '</div>' +
+      '<div class="comment-time">' + tAgo(c.timestamp) + '</div>' +
+      '</div></div>';
+  });
+  container.innerHTML = html;
+}
+
+function deleteComment(karyaId, commentKey) {
+  if (!db) return;
+  db.ref('comments/' + karyaId + '/' + commentKey).remove().catch(function() {});
+}
+
+/* ==============================================
+   PANEL TULIS KARYA
    ============================================== */
 function opP() { if (isSubmitting) return; document.getElementById('pOv').classList.add('open'); document.getElementById('fabB').style.transform = 'scale(0)'; document.body.style.overflow = 'hidden'; }
 function clP() { if (isSubmitting) return; document.getElementById('pOv').classList.remove('open'); document.getElementById('fabB').style.transform = ''; document.body.style.overflow = ''; }
@@ -673,7 +1200,6 @@ async function hF(inp) {
   var bar = document.getElementById('compressBar'), fill = document.getElementById('compressFill');
   bar.classList.add('active'); fill.style.width = '20%';
   try {
-    /* Kompresi untuk preview */
     var compressed = await kompresiGambar(f, 600, 0.7);
     fill.style.width = '80%'; sFileBase64 = compressed;
     document.getElementById('uP').style.display = 'none';
@@ -699,32 +1225,23 @@ function cFl(e) {
    STEP INDICATOR
    ============================================== */
 function setStep(id, state) {
-  var el = document.getElementById(id);
-  if (!el) return;
+  var el = document.getElementById(id); if (!el) return;
   el.className = 'drive-step ' + state;
-  if (state === 'done') {
-    el.querySelector('i').className = 'fa-solid fa-circle-check';
-  } else if (state === 'fail') {
-    el.querySelector('i').className = 'fa-solid fa-circle-exclamation';
-  }
+  if (state === 'done') el.querySelector('i').className = 'fa-solid fa-circle-check';
+  else if (state === 'fail') el.querySelector('i').className = 'fa-solid fa-circle-exclamation';
 }
 
 function resetSteps() {
   ['ds1', 'ds2', 'ds3'].forEach(function(id) {
-    var el = document.getElementById(id);
-    el.className = 'drive-step pending';
+    var el = document.getElementById(id); el.className = 'drive-step pending';
     var icons = { ds1: 'fa-image', ds2: 'fa-cloud-arrow-up', ds3: 'fa-database' };
     el.querySelector('i').className = 'fa-solid ' + icons[id];
-    el.querySelector('i').style.fontSize = '10px';
-    el.querySelector('i').style.width = '14px';
-    el.querySelector('i').style.textAlign = 'center';
+    el.querySelector('i').style.fontSize = '10px'; el.querySelector('i').style.width = '14px'; el.querySelector('i').style.textAlign = 'center';
   });
 }
 
 /* ==============================================
-   SUBMIT — DENGAN DUA STRATEGI GAMBAR
-   1. Kompresi kecil → simpan ke Firebase (untuk tampil di mading)
-   2. Kompresi sedang → upload ke Drive (untuk arsip)
+   SUBMIT KARYA
    ============================================== */
 function setSubmitLoading(on, txt) {
   var btn = document.getElementById('bS'), icon = document.getElementById('bSI'), t = document.getElementById('bST');
@@ -732,7 +1249,6 @@ function setSubmitLoading(on, txt) {
   var cb = document.getElementById('closePanelBtn');
   var inputs = document.querySelectorAll('#pnl .ip, #pnl .ch, #pnl .uz');
   var steps = document.getElementById('driveSteps');
-
   if (on) {
     isSubmitting = true; btn.disabled = true;
     icon.className = ''; icon.style.display = 'none';
@@ -760,11 +1276,11 @@ async function subK() {
 
   if (!nm) { tst('Tulis namamu dulu ya!', 'er'); document.getElementById('iN').focus(); return; }
   if (!sCat) { tst('Pilih kategori karyamu', 'er'); return; }
-  if (!is && sCat !== 'foto') { tst('Tulis isi karyamu!', 'er'); document.getElementById('iI').focus(); return; }
-  if (sCat === 'foto' && !sFile && !sFileBase64 && !is) { tst('Upload foto atau tulis caption', 'er'); return; }
+  if (!is && sCat !== 'foto' && !sVideoUrl) { tst('Tulis isi karyamu!', 'er'); document.getElementById('iI').focus(); return; }
+  if (sCat === 'foto' && !sFile && !sFileBase64 && !is && !sVideoUrl) { tst('Upload foto, video, atau tulis caption', 'er'); return; }
 
   var hasImage = !!sFileBase64;
-  var imageUrlForFirebase = ''; /* Gambar kecil untuk tampil di mading */
+  var imageUrlForFirebase = '';
   var driveArchived = false;
 
   if (hasImage) {
@@ -772,45 +1288,29 @@ async function subK() {
     resetSteps();
   }
 
-  /* LANGKAH 1: Siapkan dua versi gambar */
   if (hasImage && sFile) {
     setSubmitLoading(true, 'Memproses gambar...');
     setStep('ds1', 'active');
     try {
-      /* Versi kecil untuk Firebase (500px, 0.55) — pasti muat */
       imageUrlForFirebase = await kompresiGambar(sFile, 500, 0.55);
       setStep('ds1', 'done');
-
-      /* LANGKAH 2: Upload versi arsip ke Google Drive (800px, 0.8) */
       setSubmitLoading(true, 'Mengarsipkan gambar ke Drive...');
       setStep('ds2', 'active');
       var archiveImage = await kompresiGambar(sFile, 800, 0.8);
       var safeName = (nm || 'siswa').replace(/[^a-zA-Z0-9]/g, '_') + '_' + (sCat || 'karya') + '_' + Date.now() + '.jpg';
       var driveUrl = await uploadToDrive(archiveImage, safeName);
-
-      if (driveUrl) {
-        driveArchived = true;
-        setStep('ds2', 'done');
-        setSubmitLoading(true, 'Gambar tersimpan di Drive! Menyimpan...');
-      } else {
-        setStep('ds2', 'fail');
-        /* Tetap lanjut — gambar kecil sudah ada untuk Firebase */
-        setSubmitLoading(true, 'Drive tidak tersedia, gambar tetap disimpan...');
-      }
+      if (driveUrl) { driveArchived = true; setStep('ds2', 'done'); setSubmitLoading(true, 'Gambar tersimpan di Drive! Menyimpan...'); }
+      else { setStep('ds2', 'fail'); setSubmitLoading(true, 'Drive tidak tersedia, gambar tetap disimpan...'); }
     } catch (e) {
       console.error('Gagal memproses gambar:', e);
-      setStep('ds1', 'fail');
-      setSubmitLoading(false);
-      tst('Gagal memproses gambar. Coba gambar lain.', 'er');
-      return;
+      setStep('ds1', 'fail'); setSubmitLoading(false);
+      tst('Gagal memproses gambar. Coba gambar lain.', 'er'); return;
     }
   } else if (hasImage) {
-    /* Sudah terkompresi dari preview, gunakan langsung */
     imageUrlForFirebase = sFileBase64;
     setStep('ds1', 'done');
   }
 
-  /* LANGKAH 3: Simpan ke Firebase */
   if (hasImage) setStep('ds3', 'active');
   setSubmitLoading(true, hasImage ? 'Menyimpan ke database...' : 'Mengirim karya...');
 
@@ -822,28 +1322,22 @@ async function subK() {
       isi: is,
       imageUrl: imageUrlForFirebase,
       driveArchived: driveArchived,
+      videoUrl: sVideoUrl || '',
+      videoEmbed: sVideoEmbed || '',
+      videoPlatform: getVideoPlatform(sVideoUrl) || '',
       timestamp: Date.now()
     };
 
-    /* Validasi ukuran data sebelum kirim ke Firebase */
     var dataSize = JSON.stringify(data).length;
-    console.log('Ukuran data yang akan dikirim:', Math.round(dataSize / 1024), 'KB');
-
     if (dataSize > 8 * 1024 * 1024) {
-      /* Data terlalu besar, kurangi kualitas gambar */
-      console.warn('Data terlalu besar, mengurangi kualitas...');
-      if (sFile) {
-        imageUrlForFirebase = await kompresiGambar(sFile, 400, 0.4);
-        data.imageUrl = imageUrlForFirebase;
-      }
+      if (sFile) { imageUrlForFirebase = await kompresiGambar(sFile, 400, 0.4); data.imageUrl = imageUrlForFirebase; }
     }
 
     if (db) {
       await db.ref('karya').push(data);
     } else {
       data.id = 'local_' + Date.now();
-      KL.unshift(data);
-      rK();
+      KL.unshift(data); rK();
     }
 
     if (hasImage) setStep('ds3', 'done');
@@ -853,207 +1347,277 @@ async function subK() {
     document.getElementById('iJ').value = '';
     document.getElementById('iI').value = '';
     cFl(new Event('click'));
+    clearVideoUrl();
     document.querySelectorAll('#cC .ch').forEach(function(c) { c.classList.remove('s'); });
     sCat = ''; sFile = null; sFileBase64 = null;
 
-    setSubmitLoading(false);
-    clP();
+    setSubmitLoading(false); clP();
 
-    if (driveArchived) {
-      tst('Dipublikasikan & gambar tersimpan di Google Drive!', 'ok');
-    } else if (hasImage) {
-      tst('Karya dipublikasikan! (gambar mode lokal)', 'ok');
-    } else {
-      tst('Karyamu berhasil dipublikasikan!', 'ok');
-    }
+    if (driveArchived) tst('Dipublikasikan & gambar tersimpan di Google Drive!', 'ok');
+    else if (hasImage) tst('Karya dipublikasikan! (gambar mode lokal)', 'ok');
+    else tst('Karyamu berhasil dipublikasikan!', 'ok');
   } catch (e) {
     console.error('Submit error:', e);
     if (hasImage) setStep('ds3', 'fail');
     setSubmitLoading(false);
-
-    /* Jika error karena data terlalu besar, coba lagi tanpa gambar */
-    if (e.message && (e.message.indexOf('PAYLOAD_TOO_LARGE') !== -1 || e.code === 'PAYLOAD_TOO_LARGE')) {
-      tst('Gambar terlalu besar untuk database. Mengirim tanpa gambar...', 'er');
-      try {
-        data.imageUrl = '';
-        data.driveArchived = false;
-        await db.ref('karya').push(data);
-        tst('Karya tersimpan tanpa gambar (arsip Drive tetap ada)', 'ok');
-      } catch (e2) {
-        tst('Gagal mengirim. Coba lagi.', 'er');
-      }
-    } else {
-      tst('Gagal mengirim. Coba lagi.', 'er');
+    if (e.message && e.message.indexOf('PAYLOAD_TOO_LARGE') !== -1) {
+      try { data.imageUrl = ''; data.driveArchived = false; await db.ref('karya').push(data); tst('Karya tersimpan tanpa gambar', 'ok'); return; } catch(e2) {}
     }
+    tst('Gagal mengirim karya: ' + (e.message || 'Error'), 'er');
   }
 }
 
 /* ==============================================
-   HAPUS
+   RENDER KARTU KARYA (dengan Like, Komentar, Video)
    ============================================== */
-function showConfirm(id, e) {
-  e.stopPropagation();
-  var card = e.target.closest('.kc');
-  if (!card || card.querySelector('.confirm-del')) return;
-  var karya = KL.find(function(k) { return k.id === id; });
-  var arsipNote = karya && karya.driveArchived
-    ? '<p class="text-[10px]" style="color:var(--glow);font-weight:700;"><i class="fa-solid fa-cloud-arrow-up" style="font-size:9px;"></i> Gambar tetap aman di Google Drive</p>'
-    : '<p class="text-[10px]" style="color:var(--accent2);font-weight:600;">Data akan dihapus dari Firebase</p>';
-  var div = document.createElement('div'); div.className = 'confirm-del';
-  div.innerHTML = '<div style="font-size:32px;">\uD83D\uDDD1\uFE0F</div>' +
-    '<p class="text-sm font-extrabold" style="color:var(--fg);">Hapus dari mading?</p>' +
-    arsipNote +
-    '<div class="flex gap-3">' +
-    '<button onclick="this.closest(\'.confirm-del\').remove()" class="px-4 py-2 rounded-xl text-xs font-bold" style="background:var(--card);color:var(--fg);border:2px solid var(--border);cursor:pointer;">Batal</button>' +
-    '<button onclick="doHapus(\'' + id + '\')" class="px-4 py-2 rounded-xl text-xs font-bold" style="background:var(--accent2);color:#fff;border:none;cursor:pointer;">Ya, Hapus</button>' +
-    '</div>';
-  card.appendChild(div);
-}
-
-async function doHapus(id) {
-  try {
-    if (db) await db.ref('karya/' + id).remove();
-    KL = KL.filter(function(k) { return k.id !== id; });
-    rK();
-    tst('Dihapus dari mading (arsip Drive tetap ada)', 'ok');
-  } catch (e) {
-    console.error('Hapus error:', e);
-    tst('Gagal menghapus', 'er');
-  }
-}
-
-/* ==============================================
-   FILTER & RENDER
-   ============================================== */
-function sF(el) {
-  document.querySelectorAll('#fC .ch').forEach(function(c) { c.classList.remove('s'); });
-  el.classList.add('s'); cFilter = el.dataset.f; rK();
-}
-
 function rK() {
-  var g = document.getElementById('kG'), em = document.getElementById('eS');
-  var fl = cFilter === 'semua' ? KL : KL.filter(function(k) { return k.kategori === cFilter; });
-  document.getElementById('tK').textContent = KL.length;
-  if (!fl.length) { g.innerHTML = ''; em.style.display = 'block'; return; }
-  em.style.display = 'none';
+  var g = document.getElementById('kG');
+  var es = document.getElementById('eS');
+  var filtered = cFilter === 'semua' ? KL : KL.filter(function(k) { return k.kategori === cFilter; });
 
-  /* Dapatkan index global untuk fungsi opR */
-  g.innerHTML = fl.map(function(k, i) {
-    /* Cari index di KL (global) untuk opR */
-    var globalIdx = KL.indexOf(k);
-    if (globalIdx === -1) globalIdx = i;
+  document.getElementById('tK').textContent = filtered.length;
 
-    var s = sH(k.timestamp), ug = s <= 1, ac = gAC(k.nama), ini = gI(k.nama);
-    var hasImg = isValidImageUrl(k.imageUrl);
-    var isQ = k.kategori === 'quotes';
-    var archived = k.driveArchived;
+  if (filtered.length === 0) {
+    g.innerHTML = ''; es.style.display = 'block'; return;
+  }
+  es.style.display = 'none';
 
-    var imgHtml = '';
-    if (hasImg) {
-      imgHtml = '<div class="pn"></div>' + renderImage(k.imageUrl, k.judul || 'Gambar', 'kimg', globalIdx);
-    } else if (k.imageUrl) {
-      /* Ada data imageUrl tapi tidak valid → tampilkan placeholder */
-      imgHtml = '<div class="pn"></div><div class="img-placeholder" onclick="opR(' + globalIdx + ')">' +
-        '<i class="fa-solid fa-image"></i>' +
-        '<span>Gambar tidak tersedia</span></div>';
-    } else {
-      imgHtml = '<div class="pn"></div>';
+  var html = '';
+  filtered.forEach(function(k, idx) {
+    var realIdx = KL.indexOf(k);
+    var isLiked = !!likedItems[k.id];
+    var likeClass = isLiked ? 'liked' : '';
+    var likeIcon = isLiked ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
+
+    html += '<div class="kc c-' + k.kategori + ' ki" style="animation-delay:' + (idx * 0.06) + 's;">';
+    html += '<div class="pn"></div>';
+    html += '<button class="bd" onclick="event.stopPropagation();delK(\'' + k.id + '\',this)" title="Hapus karya"><i class="fa-solid fa-trash"></i></button>';
+
+    /* Gambar */
+    if (k.imageUrl) {
+      html += renderImage(k.imageUrl, k.judul || 'Gambar karya', 'kimg', realIdx);
     }
 
-    return '<div class="kc c-' + k.kategori + ' ki" style="animation-delay:' + Math.min(i * 0.05, 0.4) + 's;">' +
-      '<button class="bd" onclick="showConfirm(\'' + k.id + '\',event)" title="Hapus"><i class="fa-solid fa-trash-can"></i></button>' +
-      imgHtml +
-      '<div class="p-4 ' + (hasImg ? 'pt-3' : 'pt-6') + '">' +
-      (isQ ? '<div style="font-size:36px;line-height:1;color:var(--accent);opacity:.2;font-family:\'Baloo 2\',cursive;margin-bottom:-10px;">"</div>' : '') +
-      (k.judul ? '<h3 class="ft font-bold text-sm mb-1.5 leading-snug" style="color:var(--fg);cursor:pointer;" onclick="opR(' + globalIdx + ')">' + k.judul + '</h3>' : '') +
-      (k.isi ? '<p class="text-xs leading-relaxed mb-3 ' + (isQ ? 'ft font-bold italic' : '') + '" style="color:var(--muted);display:-webkit-box;-webkit-line-clamp:' + (isQ ? '3' : '4') + ';-webkit-box-orient:vertical;overflow:hidden;cursor:pointer;" onclick="opR(' + globalIdx + ')">' + k.isi + '</p>' : '') +
-      '<div class="flex items-center justify-between">' +
-      '<div class="ab"><div class="aa" style="background:' + ac + ';">' + ini + '</div><span style="color:var(--fg);">' + k.nama + '</span></div>' +
-      '<div class="tb"><i class="fa-solid ' + (cI[k.kategori] || 'fa-star') + '" style="font-size:8px;"></i>' + (cL[k.kategori] || k.kategori) + '</div>' +
-      '</div>' +
-      '<div class="flex items-center justify-between mt-2 pt-2" style="border-top:1px solid var(--border);">' +
-      '<span class="text-[9px] font-bold" style="color:var(--muted);">' + tAgo(k.timestamp) + '</span>' +
-      '<div class="flex items-center gap-2">' +
-      (archived ? '<span class="archive-badge" style="font-size:8px;padding:1px 6px;"><i class="fa-solid fa-cloud-arrow-up" style="font-size:7px;"></i>Drive</span>' : '') +
-      '<span class="sw ' + (ug ? 'u' : '') + '" style="font-size:9px;"><i class="fa-regular fa-clock" style="font-size:8px;"></i>' + s + ' hari lagi</span>' +
-      '</div></div></div></div>';
-  }).join('');
+    /* Video thumbnail */
+    if (k.videoEmbed) {
+      html += renderVideoCard(k.videoEmbed, k.videoPlatform || 'Video');
+    }
+
+    /* Konten */
+    html += '<div class="p-4">';
+    html += '<div class="flex items-center gap-2 mb-2">';
+    html += '<div class="ab"><div class="aa" style="background:' + gAC(k.nama) + ';">' + gI(k.nama) + '</div><span>' + escHtml(k.nama) + '</span></div>';
+    html += '<span class="tb"><i class="fa-solid ' + (cI[k.kategori] || 'fa-star') + '" style="font-size:8px;"></i> ' + (cL[k.kategori] || k.kategori) + '</span>';
+    html += '</div>';
+
+    if (k.judul) {
+      html += '<h3 class="ft font-extrabold text-sm mb-1" style="color:var(--fg);line-height:1.3;">' + escHtml(k.judul) + '</h3>';
+    }
+
+    if (k.isi) {
+      var shortText = k.isi.length > 150 ? k.isi.substring(0, 150) + '...' : k.isi;
+      html += '<p class="text-xs leading-relaxed mb-3" style="color:var(--muted);font-weight:600;white-space:pre-line;">' + escHtml(shortText) + '</p>';
+    }
+
+    /* Sisa hari */
+    var sisa = sH(k.timestamp);
+    html += '<div class="sw mb-3"><i class="fa-solid fa-clock" style="font-size:9px;"></i> ' + sisa + ' hari lagi';
+    if (k.driveArchived) html += ' <span style="color:var(--glow);font-size:9px;"><i class="fa-solid fa-cloud-arrow-up"></i></span>';
+    html += '</div>';
+
+    /* Baris aksi: Like & Komentar */
+    html += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">';
+    html += '<button class="like-btn ' + likeClass + '" data-kid="' + k.id + '" onclick="toggleLike(\'' + k.id + '\', event)">';
+    html += '<i class="' + likeIcon + '"></i><span class="like-count-display" data-kid="' + k.id + '">0</span>';
+    html += '</button>';
+    html += '<button class="comment-btn" onclick="event.stopPropagation();opR(' + realIdx + ')">';
+    html += '<i class="fa-regular fa-comment"></i><span>Komentar</span>';
+    html += '</button>';
+    html += '<span style="font-size:10px;color:var(--border);font-weight:600;margin-left:auto;">' + tAgo(k.timestamp) + '</span>';
+    html += '</div>';
+
+    html += '</div></div>';
+  });
+
+  g.innerHTML = html;
+
+  /* Update like counts dari database */
+  if (db) {
+    var uniqueIds = [];
+    filtered.forEach(function(k) {
+      if (uniqueIds.indexOf(k.id) === -1) uniqueIds.push(k.id);
+    });
+    uniqueIds.forEach(function(kid) {
+      db.ref('likes/' + kid).once('value', function(snap) {
+        var count = snap.val() ? Object.keys(snap.val()).length : 0;
+        document.querySelectorAll('.like-count-display[data-kid="' + kid + '"]').forEach(function(el) {
+          el.textContent = count;
+        });
+      });
+    });
+  }
 }
 
 /* ==============================================
-   MODAL BACA
+   MODAL BACA KARYA (dengan Komentar lengkap)
    ============================================== */
-function opR(i) {
-  var k = KL[i]; if (!k) return;
-  var s = sH(k.timestamp), ac = gAC(k.nama), hasImg = isValidImageUrl(k.imageUrl);
+function opR(idx) {
+  var k = KL[idx]; if (!k) return;
+  openCommentId = k.id;
+  var box = document.getElementById('rdBox');
+  var isLiked = !!likedItems[k.id];
+  var likeClass = isLiked ? 'liked' : '';
+  var likeIcon = isLiked ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
 
-  var imgSection = '';
-  if (hasImg) {
-    imgSection = renderModalImage(k.imageUrl, k.judul);
-  } else if (k.imageUrl) {
-    imgSection = '<div class="img-placeholder-modal"><i class="fa-solid fa-image"></i><span>Gambar tidak tersedia</span></div>';
+  var html = '';
+
+  /* Gambar atau video di modal */
+  if (k.imageUrl) {
+    html += renderModalImage(k.imageUrl, k.judul || 'Gambar');
+  }
+  if (k.videoEmbed) {
+    html += '<div class="video-embed" style="border-radius:' + (k.imageUrl ? '0' : '20px 20px 0 0') + ';"><iframe src="' + k.videoEmbed + '" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe></div>';
   }
 
-  document.getElementById('rdBox').innerHTML =
-    imgSection +
-    '<div class="p-5 ' + (hasImg ? '' : 'pt-7') + '">' +
-    '<div class="flex items-center gap-2 mb-3 flex-wrap">' +
-    '<span class="tb"><i class="fa-solid ' + (cI[k.kategori] || 'fa-star') + '" style="font-size:8px;"></i> ' + (cL[k.kategori] || k.kategori) + '</span>' +
-    '<span class="sw ' + (s <= 1 ? 'u' : '') + '"><i class="fa-regular fa-clock" style="font-size:9px;"></i> ' + s + ' hari lagi</span>' +
-    (k.driveArchived ? '<span class="archive-badge"><i class="fa-solid fa-cloud-arrow-up" style="font-size:8px;"></i> Tersimpan di Drive</span>' : '') +
-    '</div>' +
-    (k.judul ? '<h2 class="ft font-extrabold text-xl mb-3 leading-tight" style="color:var(--fg);">' + k.judul + '</h2>' : '') +
-    (k.kategori === 'quotes' ? '<div style="font-size:56px;line-height:1;color:var(--accent);opacity:.15;font-family:\'Baloo 2\',cursive;margin-bottom:-16px;">&ldquo;</div>' : '') +
-    (k.isi ? '<div class="text-sm leading-[1.9] mb-5 ' + (k.kategori === 'quotes' ? 'ft font-bold italic text-base' : '') + '" style="color:var(--muted);white-space:pre-wrap;">' + k.isi + '</div>' : '') +
-    '<div class="flex items-center justify-between pt-3" style="border-top:1px solid var(--border);">' +
-    '<div class="ab"><div class="aa" style="background:' + ac + ';">' + gI(k.nama) + '</div><span style="color:var(--fg);">' + k.nama + '</span></div>' +
-    '<span class="text-[10px] font-bold" style="color:var(--muted);">' + tAgo(k.timestamp) + '</span>' +
-    '</div>' +
-    '<button onclick="clRd()" class="mt-4 w-full py-2.5 rounded-xl text-sm font-bold" style="background:var(--card2);color:var(--fg);border:2px solid var(--border);cursor:pointer;">Tutup</button>' +
-    '</div>';
+  html += '<div class="p-5">';
+
+  /* Header */
+  html += '<div class="flex items-center gap-3 mb-3">';
+  html += '<div class="ab" style="padding:3px 10px 3px 3px;"><div class="aa" style="background:' + gAC(k.nama) + ';width:26px;height:26px;font-size:11px;">' + gI(k.nama) + '</div><span style="font-size:12px;">' + escHtml(k.nama) + '</span></div>';
+  html += '<span class="tb"><i class="fa-solid ' + (cI[k.kategori] || 'fa-star') + '" style="font-size:8px;"></i> ' + (cL[k.kategori] || k.kategori) + '</span>';
+  html += '<span style="margin-left:auto;font-size:10px;color:var(--muted);font-weight:600;">' + tAgo(k.timestamp) + '</span>';
+  html += '</div>';
+
+  if (k.judul) {
+    html += '<h2 class="ft font-extrabold text-lg mb-2" style="color:var(--fg);">' + escHtml(k.judul) + '</h2>';
+  }
+
+  if (k.isi) {
+    html += '<div class="text-sm leading-relaxed mb-4" style="color:var(--fg);white-space:pre-line;font-weight:600;">' + escHtml(k.isi) + '</div>';
+  }
+
+  /* Sisa hari */
+  var sisa = sH(k.timestamp);
+  html += '<div class="sw mb-4"><i class="fa-solid fa-clock" style="font-size:9px;"></i> ' + sisa + ' hari lagi';
+  if (k.driveArchived) html += ' <span style="color:var(--glow);font-size:10px;"><i class="fa-solid fa-cloud-arrow-up mr-1"></i>Tersimpan di Drive</span>';
+  html += '</div>';
+
+  /* Like di modal */
+  html += '<div style="display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:2px solid var(--border);">';
+  html += '<button class="like-btn ' + likeClass + '" data-kid="' + k.id + '" onclick="toggleLike(\'' + k.id + '\', event)" style="padding:6px 14px;font-size:13px;">';
+  html += '<i class="' + likeIcon + '"></i><span class="like-count-display" data-kid="' + k.id + '">0</span><span> Suka</span>';
+  html += '</button>';
+  html += '</div>';
+
+  /* Komentar */
+  html += '<div class="comments-section">';
+  html += '<h4 class="ft font-bold text-sm mb-3" style="color:var(--fg);"><i class="fa-solid fa-comments mr-1" style="color:var(--blue);font-size:12px;"></i> Komentar</h4>';
+  html += '<div id="modalCommentList"><div style="text-align:center;padding:12px;"><div class="sp" style="margin:0 auto;"></div></div></div>';
+
+  /* Input komentar */
+  html += '<div class="comment-input-row">';
+  html += '<input type="text" id="commentInput_' + k.id + '" placeholder="Tulis komentar..." maxlength="500" onkeydown="if(event.key===\'Enter\')sendComment(\'' + k.id + '\')">';
+  html += '<button onclick="sendComment(\'' + k.id + '\')"><i class="fa-solid fa-paper-plane" style="font-size:12px;"></i></button>';
+  html += '</div>';
+  html += '</div>';
+
+  html += '</div>';
+
+  box.innerHTML = html;
   document.getElementById('rdMod').classList.add('open');
   document.body.style.overflow = 'hidden';
+
+  /* Update like count di modal */
+  if (db) {
+    db.ref('likes/' + k.id).once('value', function(snap) {
+      var count = snap.val() ? Object.keys(snap.val()).length : 0;
+      document.querySelectorAll('.like-count-display[data-kid="' + k.id + '"]').forEach(function(el) {
+        el.textContent = count;
+      });
+    });
+    /* Muat komentar */
+    db.ref('comments/' + k.id).once('value', function(snap) {
+      var kComments = snap.val() || {};
+      var commentList = document.getElementById('modalCommentList');
+      if (commentList) renderModalComments(commentList, kComments, k.id);
+    });
+  }
 }
 
 function clRd() {
+  openCommentId = null;
   document.getElementById('rdMod').classList.remove('open');
   document.body.style.overflow = '';
 }
 
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape' && !isSubmitting) { clRd(); clP(); }
-});
+/* ==============================================
+   HAPUS KARYA
+   ============================================== */
+function delK(id, btn) {
+  var card = btn.closest('.kc');
+  if (card.querySelector('.confirm-del')) return;
+
+  var overlay = document.createElement('div');
+  overlay.className = 'confirm-del';
+  overlay.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="font-size:28px;color:var(--accent2);"></i>' +
+    '<p style="font-size:13px;font-weight:800;color:var(--fg);">Hapus karya ini?</p>' +
+    '<p style="font-size:11px;color:var(--muted);font-weight:600;">Tindakan ini tidak bisa dibatalkan</p>' +
+    '<div style="display:flex;gap:8px;">' +
+    '<button onclick="this.closest(\'.confirm-del\').remove()" style="padding:8px 20px;border-radius:10px;border:2px solid var(--border);background:var(--card);color:var(--muted);font-weight:700;font-size:12px;cursor:pointer;font-family:\'Nunito\',sans-serif;">Batal</button>' +
+    '<button onclick="confirmDel(\'' + id + '\')" style="padding:8px 20px;border-radius:10px;border:none;background:var(--accent2);color:#fff;font-weight:700;font-size:12px;cursor:pointer;font-family:\'Nunito\',sans-serif;">Hapus</button>' +
+    '</div>';
+  card.appendChild(overlay);
+}
+
+function confirmDel(id) {
+  if (!db) return;
+  db.ref('karya/' + id).remove();
+  db.ref('likes/' + id).remove();
+  db.ref('comments/' + id).remove();
+  tst('Karya berhasil dihapus', 'ok');
+}
+
+/* ==============================================
+   FILTER KATEGORI
+   ============================================== */
+function sF(el) {
+  document.querySelectorAll('#fC .ch').forEach(function(c) { c.classList.remove('s'); });
+  el.classList.add('s');
+  cFilter = el.dataset.f;
+  rK();
+}
 
 /* ==============================================
    JAM & TANGGAL
    ============================================== */
-function uC() {
+function uClock() {
   var n = new Date();
   document.getElementById('cH').textContent = String(n.getHours()).padStart(2, '0');
   document.getElementById('cM').textContent = String(n.getMinutes()).padStart(2, '0');
-}
-
-function uD() {
-  var n = new Date();
-  var m = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-  var d = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-  document.getElementById('dS').textContent = n.getDate() + ' ' + m[n.getMonth()] + ' ' + n.getFullYear();
-  document.getElementById('dD').textContent = d[n.getDay()];
+  var days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  var months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  document.getElementById('dS').textContent = days[n.getDay()];
+  document.getElementById('dD').textContent = n.getDate() + ' ' + months[n.getMonth()] + ' ' + n.getFullYear();
 }
 
 /* ==============================================
-   INIT
+   INISIALISASI
    ============================================== */
 cAnimasi();
-uC();
-uD();
-rK();
-setInterval(uC, 10000);
-setInterval(function() {
-  uD();
-  /* Re-render untuk update waktu "X hari lagi" */
-  rK();
-}, 60000);
+uClock();
+setInterval(uClock, 10000);
+updateNotifBadge();
+renderNotifList();
+
+/* Service Worker untuk notifikasi background */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('firebase-messaging-sw.js').then(function(reg) {
+    console.log('Service Worker terdaftar:', reg.scope);
+  }).catch(function(err) {
+    console.warn('SW gagal:', err);
+    /* Buat SW inline jika file tidak ada — fallback untuk notifikasi foreground saja */
+  });
+}
 </script>
 </body>
 </html>
