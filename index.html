@@ -67,6 +67,7 @@
 
     .fab{position:fixed;bottom:60px;right:24px;z-index:100;width:58px;height:58px;border-radius:50%;border:3px solid #fff;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(255,107,53,.35);transition:all .3s;}
     .fab:hover{transform:scale(1.15) rotate(90deg);box-shadow:0 6px 28px rgba(255,107,53,.5);}
+    .fab.locked{display:none !important;}
 
     .po{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .4s;}
     .po.open{opacity:1;pointer-events:all;}
@@ -160,7 +161,6 @@
     .drive-step.fail{color:var(--accent2);background:rgba(230,57,70,.08);}
     @keyframes stepPulse{0%,100%{opacity:1;}50%{opacity:.5;}}
 
-    /* ======== FITUR BARU: Like, Komentar, Video, Notifikasi ======== */
     .like-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--card2);color:var(--muted);transition:all .3s;user-select:none;}
     .like-btn:hover{border-color:var(--accent2);color:var(--accent2);}
     .like-btn.liked{background:rgba(230,57,70,.1);border-color:var(--accent2);color:var(--accent2);}
@@ -231,6 +231,19 @@
     .video-preview-box button{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:var(--card);color:var(--accent2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .3s;flex-shrink:0;}
     .video-preview-box button:hover{background:var(--accent2);color:#fff;border-color:var(--accent2);}
 
+    /* ======== JADWAL UPLOAD ======== */
+    .upload-locked-banner{padding:16px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(230,57,70,.08),rgba(255,107,53,.08));border:2px solid rgba(230,57,70,.2);text-align:center;margin-bottom:16px;animation:kanim .4s ease both;}
+    .upload-locked-banner .lock-icon{width:48px;height:48px;border-radius:50%;background:rgba(230,57,70,.12);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:20px;color:var(--accent2);}
+    .upload-locked-banner h3{font-family:'Baloo 2',cursive;font-size:16px;font-weight:800;color:var(--fg);margin-bottom:4px;}
+    .upload-locked-banner p{font-size:12px;color:var(--muted);font-weight:600;line-height:1.5;}
+    .upload-locked-banner .schedule-table{display:inline-flex;gap:4px;margin-top:12px;flex-wrap:wrap;justify-content:center;}
+    .upload-locked-banner .schedule-day{padding:5px 12px;border-radius:99px;font-size:10px;font-weight:700;border:2px solid var(--border);background:var(--card);color:var(--muted);}
+    .upload-locked-banner .schedule-day.open{background:rgba(46,196,182,.1);border-color:var(--glow);color:var(--glow);}
+    .upload-locked-banner .schedule-day.closed{background:rgba(230,57,70,.06);border-color:rgba(230,57,70,.2);color:var(--accent2);}
+    .schedule-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;margin-left:8px;}
+    .schedule-pill.open{background:rgba(46,196,182,.1);color:var(--glow);border:1px solid rgba(46,196,182,.25);}
+    .schedule-pill.closed{background:rgba(230,57,70,.08);color:var(--accent2);border:1px solid rgba(230,57,70,.2);}
+
     ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;} ::-webkit-scrollbar-thumb:hover{background:var(--glow);}
 
     @media(max-width:640px){
@@ -281,13 +294,14 @@
         </div>
       </div>
       <div class="ph"></div>
-      <div class="p-6 pb-8 max-w-2xl mx-auto">
+      <div id="uploadLockBanner" style="display:none;"></div>
+      <div class="p-6 pb-8 max-w-2xl mx-auto" id="panelContent">
         <div class="flex items-center justify-between mb-5">
           <div>
             <h2 class="ft font-extrabold text-xl" style="color:var(--fg);">Tulis Karyamu</h2>
             <p class="text-xs mt-0.5" style="color:var(--muted);font-weight:600;">Puisi, cerita, gambar, video — apapun karyamu!</p>
           </div>
-          <button id="closePanelBtn" onclick="clP()" class="w-9 h-9 rounded-full flex items-center justify-center" style="background:var(--card2);color:var(--muted);border:2px solid var(--border);cursor:pointer;font-size:14px;"><i class="fa-solid fa-xmark"></i></button>
+          <button id="closePanelBtn" onclick="clP()" class="w-9 h-9 rounded-full flex items-center justify-content:center" style="background:var(--card2);color:var(--muted);border:2px solid var(--border);cursor:pointer;font-size:14px;"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="space-y-4">
           <div>
@@ -322,7 +336,6 @@
             <div class="compress-bar" id="compressBar"><div class="fill" id="compressFill"></div></div>
             <input type="file" id="fI" accept="image/*" style="display:none;" onchange="hF(this)">
           </div>
-          <!-- UPLOAD URL VIDEO BARU -->
           <div>
             <label class="text-xs font-bold block mb-1.5" style="color:var(--muted);">URL Video <span style="color:var(--border);">(opsional — YouTube / TikTok / dll)</span></label>
             <div class="video-url-input">
@@ -362,7 +375,6 @@
           </div>
         </div>
         <div class="flex items-center gap-3">
-          <!-- Notifikasi Bell -->
           <div style="position:relative;" id="notifWrap">
             <div class="notif-bell" id="notifBell" onclick="toggleNotifPanel()">
               <i class="fa-solid fa-bell"></i>
@@ -397,6 +409,7 @@
           <span class="text-xs font-bold" style="color:var(--muted);"><i class="fa-solid fa-layer-group mr-1" style="color:var(--glow);"></i> <strong id="tK" style="color:var(--fg);">0</strong> karya</span>
           <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="color:var(--accent);background:rgba(255,107,53,.08);"><i class="fa-solid fa-hourglass-half mr-0.5"></i> 7 hari</span>
           <span class="archive-badge hidden sm:inline-flex"><i class="fa-solid fa-cloud-arrow-up" style="font-size:8px;"></i> Arsip ke Drive</span>
+          <span id="schedulePill" class="schedule-pill"></span>
         </div>
         <div class="flex gap-1.5 overflow-x-auto" id="fC">
           <button class="ch s" data-f="semua" onclick="sF(this)" style="padding:5px 12px;font-size:11px;">Semua</button>
@@ -443,15 +456,15 @@ var db = null, messaging = null, fbOk = false;
 var KL = [];
 var sCat = '', sFile = null, sFileBase64 = null, cFilter = 'semua';
 var isSubmitting = false;
-var sVideoUrl = ''; /* URL video yang divalidasi */
-var sVideoEmbed = ''; /* kode embed iframe */
+var sVideoUrl = '';
+var sVideoEmbed = '';
 
 /* Like & komentar state lokal */
-var likedItems = {}; /* { karyaId: true } disimpan di localStorage */
-var openCommentId = null; /* ID karya yang komentarnya sedang ditampilkan di modal */
+var likedItems = {};
+var openCommentId = null;
 
 /* Notifikasi */
-var notifications = []; /* { id, type, text, time, read, karyaId } */
+var notifications = [];
 var notifPanelOpen = false;
 var lastKnownCount = 0;
 
@@ -468,6 +481,84 @@ function saveLikes() {
 }
 function saveNotifs() {
   try { localStorage.setItem('mading_notifs', JSON.stringify(notifications)); } catch(e) {}
+}
+
+/* ==============================================
+   JADWAL UPLOAD: Jumat-Minggu buka, Senin-Kamis kunci
+   ============================================== */
+var HARI_NAMA = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+var UPLOAD_OPEN_DAYS = [5, 6, 0]; /* Jumat=5, Sabtu=6, Minggu=0 */
+
+function isUploadOpen() {
+  var day = new Date().getDay();
+  return UPLOAD_OPEN_DAYS.indexOf(day) !== -1;
+}
+
+function getUploadStatusText() {
+  if (isUploadOpen()) {
+    return { label: 'Buka', icon: 'fa-lock-open', cls: 'open' };
+  }
+  /* Hitung hari sampai Jumat berikutnya */
+  var now = new Date();
+  var day = now.getDay();
+  var daysUntil;
+  if (day === 0) daysUntil = 5; /* Minggu -> Jumat = 5 hari */
+  else daysUntil = 5 - day; /* Senin=4, Selasa=3, Rabu=2, Kamis=1 */
+  if (daysUntil <= 0) daysUntil = 5;
+  return { label: 'Kunci · Buka ' + daysUntil + ' hari lagi', icon: 'fa-lock', cls: 'closed' };
+}
+
+function updateUploadSchedule() {
+  var open = isUploadOpen();
+  var status = getUploadStatusText();
+  var fab = document.getElementById('fabB');
+  var pill = document.getElementById('schedulePill');
+  var lockBanner = document.getElementById('uploadLockBanner');
+
+  /* Update pill di header */
+  pill.className = 'schedule-pill ' + status.cls;
+  pill.innerHTML = '<i class="fa-solid ' + status.icon + '" style="font-size:8px;"></i> Upload ' + status.label;
+
+  if (open) {
+    fab.classList.remove('locked');
+    lockBanner.style.display = 'none';
+  } else {
+    fab.classList.add('locked');
+
+    var tableHtml = '';
+    HARI_NAMA.forEach(function(nama, i) {
+      var isOpen = UPLOAD_OPEN_DAYS.indexOf(i) !== -1;
+      tableHtml += '<span class="schedule-day ' + (isOpen ? 'open' : 'closed') + '">' +
+        (isOpen ? '<i class="fa-solid fa-check" style="font-size:8px;margin-right:2px;"></i>' : '<i class="fa-solid fa-xmark" style="font-size:8px;margin-right:2px;"></i>') +
+        nama + '</span>';
+    });
+
+    lockBanner.style.display = 'block';
+    lockBanner.innerHTML =
+      '<div class="upload-locked-banner">' +
+        '<div class="lock-icon"><i class="fa-solid fa-lock"></i></div>' +
+        '<h3>Upload Sedang Ditutup</h3>' +
+        '<p>Kamu bisa mengirim karya hanya pada <strong style="color:var(--glow);">Jumat, Sabtu, dan Minggu</strong>.<br>Sabar ya, tunggu jadwal berikutnya!</p>' +
+        '<div class="schedule-table">' + tableHtml + '</div>' +
+      '</div>';
+  }
+}
+
+function disablePanelInputs(disabled) {
+  var panel = document.getElementById('panelContent');
+  if (!panel) return;
+  var inputs = panel.querySelectorAll('.ip, .ch, .uz, .bs, .video-url-input button');
+  inputs.forEach(function(el) {
+    if (disabled) {
+      el.style.pointerEvents = 'none';
+      el.style.opacity = '.35';
+      if (el.tagName === 'BUTTON' && el.id === 'bS') el.disabled = true;
+    } else {
+      el.style.pointerEvents = '';
+      el.style.opacity = '';
+      if (el.tagName === 'BUTTON' && el.id === 'bS') el.disabled = false;
+    }
+  });
 }
 
 /* ==============================================
@@ -555,31 +646,20 @@ function handleModalImgError(imgId, fallbackId) {
 function extractVideoEmbed(url) {
   if (!url) return '';
   url = url.trim();
-
-  /* YouTube: berbagai format URL */
   var ytMatch = url.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
   if (ytMatch) return 'https://www.youtube.com/embed/' + ytMatch[1];
-
-  /* TikTok embed */
   if (url.indexOf('tiktok.com') !== -1) {
     var ttMatch = url.match(/video\/(\d+)/);
     if (ttMatch) return 'https://www.tiktok.com/embed/v2/' + ttMatch[1];
-    return ''; /* TikTok lain tidak selalu bisa di-embed */
+    return '';
   }
-
-  /* Instagram Reels */
   if (url.indexOf('instagram.com') !== -1) {
     var igMatch = url.match(/\/reel\/([a-zA-Z0-9_-]+)/);
     if (igMatch) return 'https://www.instagram.com/reel/' + igMatch[1] + '/embed/';
   }
-
-  /* Vimeo */
   var vmMatch = url.match(/(?:https?:\/\/)?(?:www\.)?vimeo\.com\/(\d+)/);
   if (vmMatch) return 'https://player.vimeo.com/video/' + vmMatch[1];
-
-  /* Sudah berupa embed URL */
   if (url.indexOf('/embed/') !== -1) return url;
-
   return '';
 }
 
@@ -592,9 +672,7 @@ function getVideoPlatform(url) {
   return 'Video';
 }
 
-function previewVideoUrl() {
-  /* Auto-preview saat user mengetik */
-}
+function previewVideoUrl() {}
 
 function embedVideoFromUrl() {
   var url = document.getElementById('iVU').value.trim();
@@ -618,13 +696,11 @@ function clearVideoUrl() {
   document.getElementById('videoPreviewBox').style.display = 'none';
 }
 
-/* Render video thumbnail di card */
 function renderVideoCard(embedUrl, platform) {
   if (!embedUrl) return '';
   var ytId = embedUrl.match(/embed\/([a-zA-Z0-9_-]+)/);
   var thumb = ytId ? 'https://img.youtube.com/vi/' + ytId[1] + '/hqdefault.jpg' : '';
   var platformColor = platform === 'YouTube' ? '#ff0000' : platform === 'TikTok' ? '#000' : platform === 'Instagram' ? '#e1306c' : 'var(--blue)';
-
   if (thumb) {
     return '<div class="video-thumb" onclick="playCardVideo(this, \'' + embedUrl.replace(/'/g, "\\'") + '\')">' +
       '<img src="' + thumb + '" alt="Video thumbnail" loading="lazy">' +
@@ -637,7 +713,6 @@ function renderVideoCard(embedUrl, platform) {
 }
 
 function playCardVideo(el, embedUrl) {
-  /* Ganti thumbnail dengan iframe */
   var parent = el.parentNode;
   var div = document.createElement('div');
   div.className = 'video-embed';
@@ -651,29 +726,23 @@ function playCardVideo(el, embedUrl) {
 function initMessaging() {
   try {
     messaging = firebase.messaging();
-    /* Cek apakah sudah pernah izinkan */
     if (Notification.permission === 'granted') {
       getAndSaveToken();
     } else if (Notification.permission === 'default') {
-      /* Tampilkan banner setelah 3 detik */
       setTimeout(function() {
         if (Notification.permission === 'default') {
           document.getElementById('notifBanner').classList.add('show');
-          /* Sembunyikan setelah 15 detik jika tidak di-klik */
           setTimeout(function() {
             document.getElementById('notifBanner').classList.remove('show');
           }, 15000);
         }
       }, 3000);
     }
-
-    /* Listener untuk notifikasi saat app foreground */
     messaging.onMessage(function(payload) {
       console.log('Notifikasi diterima (foreground):', payload);
       var data = payload.data || {};
       var title = data.title || 'Mading Digital';
       var body = data.body || 'Ada karya baru!';
-      /* Tampilkan notifikasi in-app */
       addNotification('new_karya', body, data.karyaId);
       tst(body, 'ok');
     });
@@ -685,10 +754,7 @@ function initMessaging() {
 async function requestNotifPermission() {
   document.getElementById('notifBanner').classList.remove('show');
   try {
-    if (!messaging) {
-      tst('Fitur notifikasi belum tersedia', 'er');
-      return;
-    }
+    if (!messaging) { tst('Fitur notifikasi belum tersedia', 'er'); return; }
     var permission = await Notification.requestPermission();
     if (permission === 'granted') {
       await getAndSaveToken();
@@ -706,7 +772,6 @@ async function getAndSaveToken() {
   try {
     var token = await messaging.getToken({ vapidKey: VAPID_KEY });
     console.log('FCM Token:', token);
-    /* Simpan token ke Firebase agar server bisa kirim notifikasi */
     if (db) {
       db.ref('fcm_tokens/' + token.replace(/[^a-zA-Z0-9]/g, '_')).set({
         token: token,
@@ -732,7 +797,6 @@ function addNotification(type, text, karyaId) {
     read: false
   };
   notifications.unshift(notif);
-  /* Batasi maksimal 50 notifikasi */
   if (notifications.length > 50) notifications = notifications.slice(0, 50);
   saveNotifs();
   updateNotifBadge();
@@ -759,7 +823,7 @@ function renderNotifList() {
   var html = '';
   var shown = notifications.slice(0, 20);
   shown.forEach(function(n) {
-    var iconBg, iconClass;
+    var iconBg, iconClass, iconColor;
     switch(n.type) {
       case 'new_karya': iconBg = 'rgba(255,107,53,.12)'; iconClass = 'fa-solid fa-pen-fancy'; iconColor = 'var(--accent)'; break;
       case 'like': iconBg = 'rgba(230,57,70,.12)'; iconClass = 'fa-solid fa-heart'; iconColor = 'var(--accent2)'; break;
@@ -791,7 +855,6 @@ function markAllRead() {
 }
 
 function clickNotif(notifId, karyaId) {
-  /* Tandai dibaca */
   var n = notifications.find(function(x) { return x.id === notifId; });
   if (n) n.read = true;
   saveNotifs();
@@ -799,15 +862,12 @@ function clickNotif(notifId, karyaId) {
   renderNotifList();
   notifPanelOpen = false;
   document.getElementById('notifPanel').classList.remove('open');
-
-  /* Jika ada karyaId, buka modal karya tersebut */
   if (karyaId) {
     var idx = KL.findIndex(function(k) { return k.id === karyaId; });
     if (idx !== -1) opR(idx);
   }
 }
 
-/* Tutup panel notifikasi jika klik di luar */
 document.addEventListener('click', function(e) {
   var wrap = document.getElementById('notifWrap');
   if (notifPanelOpen && wrap && !wrap.contains(e.target)) {
@@ -848,34 +908,23 @@ try {
     }
     newKL.sort(function(a, b) { return b.timestamp - a.timestamp; });
 
-    /* Deteksi karya baru untuk notifikasi */
     if (KL.length > 0 && newKL.length > 0) {
       var oldIds = KL.map(function(k) { return k.id; });
       newKL.forEach(function(nk) {
         if (oldIds.indexOf(nk.id) === -1) {
-          /* Karya baru terdeteksi! */
           var txt = '<strong>' + escHtml(nk.nama) + '</strong> menulis karya baru';
           if (nk.kategori) txt += ' di kategori ' + (cL[nk.kategori] || nk.kategori);
           if (nk.judul) txt += ': "' + escHtml(nk.judul) + '"';
           addNotification('new_karya', txt, nk.id);
-
-          /* Kirim notifikasi push jika FCM tersedia */
-          if (messaging && Notification.permission === 'granted') {
-            /* Notifikasi push akan dikirim via onMessage listener atau background service worker */
-          }
         }
       });
-    } else if (KL.length === 0 && newKL.length > 0) {
-      /* Karya pertama kali dimuat, tidak perlu notifikasi */
     }
 
     KL = newKL;
     rK();
   });
 
-  /* Listener untuk likes real-time */
   db.ref('likes').on('value', function(snap) {
-    /* Update tampilan like tanpa re-render penuh */
     var likesData = snap.val() || {};
     document.querySelectorAll('.like-count-display').forEach(function(el) {
       var kid = el.getAttribute('data-kid');
@@ -887,9 +936,7 @@ try {
     });
   });
 
-  /* Listener untuk komentar real-time */
   db.ref('comments').on('value', function(snap) {
-    /* Update komentar yang sedang terbuka di modal */
     if (openCommentId) {
       var commentsData = snap.val() || {};
       var kComments = commentsData[openCommentId] || {};
@@ -1050,20 +1097,16 @@ function toggleLike(karyaId, event) {
   var likeRef = db.ref('likes/' + karyaId + '/_' + generateLocalId());
 
   if (likedItems[karyaId]) {
-    /* Unlike */
     likeRef.remove().then(function() {
       delete likedItems[karyaId];
       saveLikes();
       updateLikeUI(karyaId, false);
     }).catch(function(e) { console.error('Unlike error:', e); });
   } else {
-    /* Like */
     likeRef.set({ t: Date.now() }).then(function() {
       likedItems[karyaId] = true;
       saveLikes();
       updateLikeUI(karyaId, true);
-
-      /* Buat partikel hati */
       if (event) {
         var btn = event.currentTarget || event.target.closest('.like-btn');
         if (btn) spawnHearts(btn);
@@ -1073,7 +1116,6 @@ function toggleLike(karyaId, event) {
 }
 
 function updateLikeUI(karyaId, isLiked) {
-  /* Update semua tombol like untuk karya ini */
   document.querySelectorAll('.like-btn[data-kid="' + karyaId + '"]').forEach(function(btn) {
     if (isLiked) {
       btn.classList.add('liked');
@@ -1083,7 +1125,6 @@ function updateLikeUI(karyaId, isLiked) {
       btn.querySelector('i').className = 'fa-regular fa-heart';
     }
   });
-  /* Update count */
   if (db) {
     db.ref('likes/' + karyaId).once('value', function(snap) {
       var count = snap.val() ? Object.keys(snap.val()).length : 0;
@@ -1109,7 +1150,6 @@ function spawnHearts(btn) {
   }
 }
 
-/* ID lokal unik untuk like (berdasarkan fingerprint sederhana) */
 var localId = null;
 function generateLocalId() {
   if (localId) return localId;
@@ -1181,10 +1221,36 @@ function deleteComment(karyaId, commentKey) {
 }
 
 /* ==============================================
-   PANEL TULIS KARYA
+   PANEL TULIS KARYA (dengan jadwal upload)
    ============================================== */
-function opP() { if (isSubmitting) return; document.getElementById('pOv').classList.add('open'); document.getElementById('fabB').style.transform = 'scale(0)'; document.body.style.overflow = 'hidden'; }
-function clP() { if (isSubmitting) return; document.getElementById('pOv').classList.remove('open'); document.getElementById('fabB').style.transform = ''; document.body.style.overflow = ''; }
+function opP() {
+  if (isSubmitting) return;
+
+  /* Cek jadwal upload */
+  if (!isUploadOpen()) {
+    /* Buka panel tapi tampilkan banner kunci & disable input */
+    document.getElementById('pOv').classList.add('open');
+    document.getElementById('fabB').style.transform = 'scale(0)';
+    document.body.style.overflow = 'hidden';
+    disablePanelInputs(true);
+    return;
+  }
+
+  /* Jadwal buka, normal */
+  disablePanelInputs(false);
+  document.getElementById('pOv').classList.add('open');
+  document.getElementById('fabB').style.transform = 'scale(0)';
+  document.body.style.overflow = 'hidden';
+}
+
+function clP() {
+  if (isSubmitting) return;
+  document.getElementById('pOv').classList.remove('open');
+  document.getElementById('fabB').style.transform = '';
+  document.body.style.overflow = '';
+  disablePanelInputs(false);
+}
+
 function pC(el) { if (isSubmitting) return; document.querySelectorAll('#cC .ch').forEach(function(c) { c.classList.remove('s'); }); el.classList.add('s'); sCat = el.dataset.c; }
 
 var uZ = document.getElementById('uZ');
@@ -1241,7 +1307,7 @@ function resetSteps() {
 }
 
 /* ==============================================
-   SUBMIT KARYA
+   SUBMIT KARYA (dengan cek jadwal)
    ============================================== */
 function setSubmitLoading(on, txt) {
   var btn = document.getElementById('bS'), icon = document.getElementById('bSI'), t = document.getElementById('bST');
@@ -1270,6 +1336,13 @@ function setSubmitLoading(on, txt) {
 
 async function subK() {
   if (isSubmitting) return;
+
+  /* Cek jadwal upload */
+  if (!isUploadOpen()) {
+    tst('Upload hanya dibuka hari Jumat–Minggu!', 'er');
+    return;
+  }
+
   var nm = document.getElementById('iN').value.trim();
   var jd = document.getElementById('iJ').value.trim();
   var is = document.getElementById('iI').value.trim();
@@ -1342,7 +1415,6 @@ async function subK() {
 
     if (hasImage) setStep('ds3', 'done');
 
-    /* Reset form */
     document.getElementById('iN').value = '';
     document.getElementById('iJ').value = '';
     document.getElementById('iI').value = '';
@@ -1393,17 +1465,14 @@ function rK() {
     html += '<div class="pn"></div>';
     html += '<button class="bd" onclick="event.stopPropagation();delK(\'' + k.id + '\',this)" title="Hapus karya"><i class="fa-solid fa-trash"></i></button>';
 
-    /* Gambar */
     if (k.imageUrl) {
       html += renderImage(k.imageUrl, k.judul || 'Gambar karya', 'kimg', realIdx);
     }
 
-    /* Video thumbnail */
     if (k.videoEmbed) {
       html += renderVideoCard(k.videoEmbed, k.videoPlatform || 'Video');
     }
 
-    /* Konten */
     html += '<div class="p-4">';
     html += '<div class="flex items-center gap-2 mb-2">';
     html += '<div class="ab"><div class="aa" style="background:' + gAC(k.nama) + ';">' + gI(k.nama) + '</div><span>' + escHtml(k.nama) + '</span></div>';
@@ -1419,13 +1488,11 @@ function rK() {
       html += '<p class="text-xs leading-relaxed mb-3" style="color:var(--muted);font-weight:600;white-space:pre-line;">' + escHtml(shortText) + '</p>';
     }
 
-    /* Sisa hari */
     var sisa = sH(k.timestamp);
     html += '<div class="sw mb-3"><i class="fa-solid fa-clock" style="font-size:9px;"></i> ' + sisa + ' hari lagi';
     if (k.driveArchived) html += ' <span style="color:var(--glow);font-size:9px;"><i class="fa-solid fa-cloud-arrow-up"></i></span>';
     html += '</div>';
 
-    /* Baris aksi: Like & Komentar */
     html += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">';
     html += '<button class="like-btn ' + likeClass + '" data-kid="' + k.id + '" onclick="toggleLike(\'' + k.id + '\', event)">';
     html += '<i class="' + likeIcon + '"></i><span class="like-count-display" data-kid="' + k.id + '">0</span>';
@@ -1441,7 +1508,6 @@ function rK() {
 
   g.innerHTML = html;
 
-  /* Update like counts dari database */
   if (db) {
     var uniqueIds = [];
     filtered.forEach(function(k) {
@@ -1471,7 +1537,6 @@ function opR(idx) {
 
   var html = '';
 
-  /* Gambar atau video di modal */
   if (k.imageUrl) {
     html += renderModalImage(k.imageUrl, k.judul || 'Gambar');
   }
@@ -1481,7 +1546,6 @@ function opR(idx) {
 
   html += '<div class="p-5">';
 
-  /* Header */
   html += '<div class="flex items-center gap-3 mb-3">';
   html += '<div class="ab" style="padding:3px 10px 3px 3px;"><div class="aa" style="background:' + gAC(k.nama) + ';width:26px;height:26px;font-size:11px;">' + gI(k.nama) + '</div><span style="font-size:12px;">' + escHtml(k.nama) + '</span></div>';
   html += '<span class="tb"><i class="fa-solid ' + (cI[k.kategori] || 'fa-star') + '" style="font-size:8px;"></i> ' + (cL[k.kategori] || k.kategori) + '</span>';
@@ -1496,25 +1560,21 @@ function opR(idx) {
     html += '<div class="text-sm leading-relaxed mb-4" style="color:var(--fg);white-space:pre-line;font-weight:600;">' + escHtml(k.isi) + '</div>';
   }
 
-  /* Sisa hari */
   var sisa = sH(k.timestamp);
   html += '<div class="sw mb-4"><i class="fa-solid fa-clock" style="font-size:9px;"></i> ' + sisa + ' hari lagi';
   if (k.driveArchived) html += ' <span style="color:var(--glow);font-size:10px;"><i class="fa-solid fa-cloud-arrow-up mr-1"></i>Tersimpan di Drive</span>';
   html += '</div>';
 
-  /* Like di modal */
   html += '<div style="display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:2px solid var(--border);">';
   html += '<button class="like-btn ' + likeClass + '" data-kid="' + k.id + '" onclick="toggleLike(\'' + k.id + '\', event)" style="padding:6px 14px;font-size:13px;">';
   html += '<i class="' + likeIcon + '"></i><span class="like-count-display" data-kid="' + k.id + '">0</span><span> Suka</span>';
   html += '</button>';
   html += '</div>';
 
-  /* Komentar */
   html += '<div class="comments-section">';
   html += '<h4 class="ft font-bold text-sm mb-3" style="color:var(--fg);"><i class="fa-solid fa-comments mr-1" style="color:var(--blue);font-size:12px;"></i> Komentar</h4>';
   html += '<div id="modalCommentList"><div style="text-align:center;padding:12px;"><div class="sp" style="margin:0 auto;"></div></div></div>';
 
-  /* Input komentar */
   html += '<div class="comment-input-row">';
   html += '<input type="text" id="commentInput_' + k.id + '" placeholder="Tulis komentar..." maxlength="500" onkeydown="if(event.key===\'Enter\')sendComment(\'' + k.id + '\')">';
   html += '<button onclick="sendComment(\'' + k.id + '\')"><i class="fa-solid fa-paper-plane" style="font-size:12px;"></i></button>';
@@ -1527,7 +1587,6 @@ function opR(idx) {
   document.getElementById('rdMod').classList.add('open');
   document.body.style.overflow = 'hidden';
 
-  /* Update like count di modal */
   if (db) {
     db.ref('likes/' + k.id).once('value', function(snap) {
       var count = snap.val() ? Object.keys(snap.val()).length : 0;
@@ -1535,7 +1594,6 @@ function opR(idx) {
         el.textContent = count;
       });
     });
-    /* Muat komentar */
     db.ref('comments/' + k.id).once('value', function(snap) {
       var kComments = snap.val() || {};
       var commentList = document.getElementById('modalCommentList');
@@ -1606,16 +1664,16 @@ function uClock() {
 cAnimasi();
 uClock();
 setInterval(uClock, 10000);
+updateUploadSchedule();
+setInterval(updateUploadSchedule, 60000);
 updateNotifBadge();
 renderNotifList();
 
-/* Service Worker untuk notifikasi background */
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('firebase-messaging-sw.js').then(function(reg) {
     console.log('Service Worker terdaftar:', reg.scope);
   }).catch(function(err) {
     console.warn('SW gagal:', err);
-    /* Buat SW inline jika file tidak ada — fallback untuk notifikasi foreground saja */
   });
 }
 </script>
