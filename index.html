@@ -130,8 +130,26 @@
     .ki{animation:kanim .45s ease both;}
     @keyframes kanim{from{opacity:0;transform:translateY(16px) scale(.96);}to{opacity:1;transform:translateY(0) scale(1);}}
 
-    .kimg{width:100%;max-height:140px;object-fit:cover;cursor:pointer;transition:all .3s;}
+    .kimg{width:100%;max-height:140px;object-fit:cover;cursor:pointer;transition:all .3s;display:block;}
     .kimg:hover{filter:brightness(1.05) saturate(1.1);}
+
+    /* Placeholder gambar gagal dimuat — TAMPILKAN, jangan sembunyikan */
+    .img-placeholder{
+      width:100%;max-height:140px;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:6px;
+      background:linear-gradient(135deg,var(--card2),rgba(46,196,182,.06));
+      color:var(--muted);font-size:11px;font-weight:700;
+      cursor:pointer;transition:all .3s;
+    }
+    .img-placeholder i{font-size:24px;color:var(--border);}
+    .img-placeholder:hover{background:rgba(46,196,182,.08);}
+    .img-placeholder-modal{
+      width:100%;min-height:120px;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:8px;padding:30px;
+      background:linear-gradient(135deg,var(--card2),rgba(46,196,182,.06));
+      color:var(--muted);font-size:13px;font-weight:700;
+    }
+    .img-placeholder-modal i{font-size:36px;color:var(--border);}
 
     .confirm-del{position:absolute;inset:0;background:rgba(253,246,236,.95);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:20;border-radius:18px;}
 
@@ -305,14 +323,14 @@
 
 <script>
 /* ==============================================
-   URL GOOGLE APPS SCRIPT — SUDAH DISET
+   URL GOOGLE APPS SCRIPT
    ============================================== */
-const DRIVE_API_URL = 'https://script.google.com/macros/s/AKfycbwIpYou2OLe7Vlve3ELJmBwG-1NA2APRXh1YlHkaFj_miHJjgqaqBgEHLqg-1xNnTel5A/exec';
+var DRIVE_API_URL = 'https://script.google.com/macros/s/AKfycbwIpYou2OLe7Vlve3ELJmBwG-1NA2APRXh1YlHkaFj_miHJjgqaqBgEHLqg-1xNnTel5A/exec';
 
 /* ==============================================
    FIREBASE CONFIG
    ============================================== */
-const fc = {
+var fc = {
   apiKey:"AIzaSyCtdIHQwf9PYMCweYrgpocR6MdCn-nTLKQ",
   authDomain:"mading-digital-de6d7.firebaseapp.com",
   projectId:"mading-digital-de6d7",
@@ -322,37 +340,163 @@ const fc = {
   measurementId:"G-43B7EB7XV8"
 };
 
-let db = null, fbOk = false;
-let KL = [];
-let sCat = '', sFile = null, sFileBase64 = null, cFilter = 'semua';
-let isSubmitting = false;
+var db = null, fbOk = false;
+var KL = [];
+var sCat = '', sFile = null, sFileBase64 = null, cFilter = 'semua';
+var isSubmitting = false;
 
+/* ==============================================
+   UTILITAS VALIDASI URL GAMBAR
+   Memastikan URL yang disimpan benar-benar bisa ditampilkan
+   ============================================== */
+function isValidImageUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  var trimmed = url.trim();
+  /* Base64 data URL */
+  if (trimmed.indexOf('data:image/') === 0) return true;
+  /* URL Google Drive (langsung atau via redirect) */
+  if (trimmed.indexOf('https://drive.google.com') === 0) return true;
+  if (trimmed.indexOf('https://lh3.googleusercontent.com') === 0) return true;
+  if (trimmed.indexOf('https://docs.google.com') === 0) return true;
+  /* URL gambar lain yang umum */
+  if (trimmed.match(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?.*)?$/i)) return true;
+  /* URL dengan parameter gambar */
+  if (trimmed.indexOf('https://') === 0 && trimmed.length > 15) return true;
+  /* Terlalu pendek = pasti bukan URL gambar valid */
+  if (trimmed.length < 20) return false;
+  return true;
+}
+
+/* Cek apakah URL ini Google Drive yang butuh proxy */
+function isDriveUrl(url) {
+  if (!url) return false;
+  return url.indexOf('drive.google.com') !== -1 || url.indexOf('docs.google.com') !== -1;
+}
+
+/* ==============================================
+   TAMPILKAN GAMBAR DENGAN FALLBACK
+   Fungsi ini MEMASTIKAN gambar selalu tampil,
+   jika gagal → tampilkan placeholder, BUKAN hilang
+   ============================================== */
+function renderImage(url, alt, cssClass, index) {
+  if (!isValidImageUrl(url)) {
+    /* Data tidak valid → langsung tampilkan placeholder */
+    return '<div class="' + cssClass + '" onclick="opR(' + index + ')">' +
+      '<i class="fa-solid fa-image-slash"></i>' +
+      '<span>Gambar tidak tersedia</span></div>';
+  }
+
+  /* Gunakan ID unik supaya onerror bisa menemukan elemennya */
+  var imgId = 'img_' + index + '_' + Date.now();
+  var fallbackId = 'fb_' + index + '_' + Date.now();
+
+  return '<div style="position:relative;">' +
+    '<img id="' + imgId + '" src="' + url + '" alt="' + (alt || 'Gambar') + '" class="' + cssClass + '" onclick="opR(' + index + ')" loading="lazy" style="display:block;" ' +
+    'onerror="handleImgError(\'' + imgId + '\',\'' + fallbackId + '\',' + index + ')">' +
+    '<div id="' + fallbackId + '" class="img-placeholder" style="display:none;" onclick="opR(' + index + ')">' +
+    '<i class="fa-solid fa-image"></i>' +
+    '<span>Gambar gagal dimuat</span>' +
+    '<span style="font-size:9px;color:var(--accent);">Klik untuk detail</span></div></div>';
+}
+
+/* Handler error gambar — TAMPILKAN placeholder, jangan sembunyikan */
+function handleImgError(imgId, fallbackId, index) {
+  var img = document.getElementById(imgId);
+  var fb = document.getElementById(fallbackId);
+  if (img) {
+    img.style.display = 'none';
+    /* Coba retry sekali lagi dengan delay (kadang CDN lambat) */
+    var origSrc = img.getAttribute('src');
+    if (origSrc && !img.getAttribute('data-retried')) {
+      img.setAttribute('data-retried', '1');
+      setTimeout(function() {
+        var testImg = new Image();
+        testImg.onload = function() {
+          img.src = origSrc;
+          img.style.display = 'block';
+          if (fb) fb.style.display = 'none';
+        };
+        testImg.onerror = function() {
+          /* Benar-benar gagal → tampilkan placeholder */
+          if (fb) fb.style.display = 'flex';
+        };
+        testImg.src = origSrc + (origSrc.indexOf('?') !== -1 ? '&' : '?') + '_retry=' + Date.now();
+      }, 1500);
+    } else {
+      /* Sudah di-retry, tetap gagal */
+      if (fb) fb.style.display = 'flex';
+    }
+  }
+}
+
+/* Render gambar untuk modal (lebih besar) */
+function renderModalImage(url, alt) {
+  if (!isValidImageUrl(url)) {
+    return '<div class="img-placeholder-modal"><i class="fa-solid fa-image"></i><span>Gambar tidak tersedia</span></div>';
+  }
+  var modalImgId = 'modal_img_' + Date.now();
+  var modalFbId = 'modal_fb_' + Date.now();
+  return '<div style="position:relative;">' +
+    '<img id="' + modalImgId + '" src="' + url + '" alt="' + (alt || 'Gambar') + '" style="width:100%;max-height:220px;object-fit:cover;border-radius:20px 20px 0 0;display:block;" ' +
+    'onerror="handleModalImgError(\'' + modalImgId + '\',\'' + modalFbId + '\')">' +
+    '<div id="' + modalFbId + '" class="img-placeholder-modal" style="display:none;border-radius:20px 20px 0 0;">' +
+    '<i class="fa-solid fa-image"></i><span>Gambar gagal dimuat</span></div></div>';
+}
+
+function handleModalImgError(imgId, fallbackId) {
+  var img = document.getElementById(imgId);
+  var fb = document.getElementById(fallbackId);
+  if (img) {
+    img.style.display = 'none';
+    var origSrc = img.getAttribute('src');
+    if (origSrc && !img.getAttribute('data-retried')) {
+      img.setAttribute('data-retried', '1');
+      setTimeout(function() {
+        var testImg = new Image();
+        testImg.onload = function() {
+          img.src = origSrc;
+          img.style.display = 'block';
+          if (fb) fb.style.display = 'none';
+        };
+        testImg.onerror = function() {
+          if (fb) fb.style.display = 'flex';
+        };
+        testImg.src = origSrc + (origSrc.indexOf('?') !== -1 ? '&' : '?') + '_r=' + Date.now();
+      }, 1500);
+    } else {
+      if (fb) fb.style.display = 'flex';
+    }
+  }
+}
+
+/* ==============================================
+   FIREBASE INIT
+   ============================================== */
 try {
   firebase.initializeApp(fc);
   db = firebase.database();
 
-  db.ref('.info/connected').on('value', s => {
+  db.ref('.info/connected').on('value', function(s) {
     fbOk = s.val() === true;
     sFS(fbOk ? 'on' : 'of', fbOk ? 'Terhubung' : 'Offline — cek koneksi');
     if (fbOk) tst('Firebase terhubung!', 'ok');
   });
 
-  db.ref('karya').orderByChild('timestamp').on('value', snap => {
-    const d = snap.val();
+  db.ref('karya').orderByChild('timestamp').on('value', function(snap) {
+    var d = snap.val();
     KL = [];
     if (d) {
-      Object.keys(d).forEach(k => {
-        const v = d[k];
-        const age = Date.now() - v.timestamp;
+      Object.keys(d).forEach(function(k) {
+        var v = d[k];
+        var age = Date.now() - v.timestamp;
         if (age < 7 * 24 * 60 * 60 * 1000) {
           KL.push({ id: k, ...v });
         } else {
-          /* Hapus dari Firebase — gambar sudah aman di Google Drive */
-          db.ref('karya/' + k).remove().catch(() => {});
+          db.ref('karya/' + k).remove().catch(function() {});
         }
       });
     }
-    KL.sort((a, b) => b.timestamp - a.timestamp);
+    KL.sort(function(a, b) { return b.timestamp - a.timestamp; });
     rK();
   });
 } catch (e) {
@@ -365,21 +509,27 @@ try {
    ============================================== */
 async function uploadToDrive(base64Image, fileName) {
   try {
-    const resp = await fetch(DRIVE_API_URL, {
+    /* Pastikan base64 bersih — hapus prefix data:image/... kalau ada */
+    var cleanBase64 = base64Image;
+    if (base64Image.indexOf('data:image/') === 0) {
+      cleanBase64 = base64Image;
+    }
+
+    var resp = await fetch(DRIVE_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
-        image: base64Image,
+        image: cleanBase64,
         fileName: fileName,
         mimeType: 'image/jpeg'
       })
     });
-    const result = await resp.json();
-    if (result.success) {
+    var result = await resp.json();
+    if (result.success && result.url) {
       console.log('Upload ke Drive berhasil:', result.url);
       return result.url;
     } else {
-      console.warn('Upload Drive gagal:', result.error);
+      console.warn('Upload Drive gagal:', result.error || 'Tidak ada URL');
       return null;
     }
   } catch (err) {
@@ -389,20 +539,20 @@ async function uploadToDrive(base64Image, fileName) {
 }
 
 /* ==============================================
-   UTILITAS
+   UTILITAS UMUM
    ============================================== */
 function sFS(s, t) {
-  const el = document.getElementById('fbs');
+  var el = document.getElementById('fbs');
   el.className = 'fbs ' + s;
   document.getElementById('fbt').textContent = t;
 }
 
 function tst(m, tp) {
   tp = tp || 'ok';
-  const c = document.getElementById('toastC'), t = document.createElement('div');
+  var c = document.getElementById('toastC'), t = document.createElement('div');
   t.className = 'ts ' + tp;
-  const ic = tp === 'ok' ? 'fa-circle-check' : 'fa-circle-exclamation';
-  const cl = tp === 'ok' ? 'var(--glow)' : 'var(--accent2)';
+  var ic = tp === 'ok' ? 'fa-circle-check' : 'fa-circle-exclamation';
+  var cl = tp === 'ok' ? 'var(--glow)' : 'var(--accent2)';
   t.innerHTML = '<i class="fa-solid ' + ic + '" style="color:' + cl + '"></i> ' + m;
   c.appendChild(t);
   requestAnimationFrame(function() { t.classList.add('sh'); });
@@ -410,10 +560,10 @@ function tst(m, tp) {
 }
 
 function tAgo(ts) {
-  const d = Date.now() - ts, m = Math.floor(d / 60000);
+  var d = Date.now() - ts, m = Math.floor(d / 60000);
   if (m < 1) return 'Baru saja';
   if (m < 60) return m + ' menit lalu';
-  const h = Math.floor(m / 60);
+  var h = Math.floor(m / 60);
   if (h < 24) return h + ' jam lalu';
   return Math.floor(h / 24) + ' hari lalu';
 }
@@ -428,7 +578,9 @@ var cL = { puisi: 'Puisi', cerita: 'Cerita', opini: 'Opini', quotes: 'Quotes', f
 var cI = { puisi: 'fa-feather', cerita: 'fa-book-open', opini: 'fa-comment-dots', quotes: 'fa-quote-left', foto: 'fa-camera', lainnya: 'fa-star' };
 
 /* ==============================================
-   KOMPRESI GAMBAR — kualitas lebih tinggi untuk arsip
+   KOMPRESI GAMBAR
+   Untuk Firebase: ukuran kecil (500px, 0.6) biar muat
+   Untuk Drive: ukuran sedang (800px, 0.8) untuk kualitas arsip
    ============================================== */
 function kompresiGambar(file, maxW, quality) {
   return new Promise(function(resolve, reject) {
@@ -439,15 +591,24 @@ function kompresiGambar(file, maxW, quality) {
         var w = img.width, h = img.height;
         if (w > maxW) { h = Math.round(h * (maxW / w)); w = maxW; }
         var canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
+        canvas.width = Math.max(1, w);
+        canvas.height = Math.max(1, h);
         var ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', quality));
+        /* Gunakan white background untuk gambar PNG transparan */
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        var result = canvas.toDataURL('image/jpeg', quality);
+        if (!result || result === 'data:,') {
+          reject(new Error('Kompresi menghasilkan data kosong'));
+          return;
+        }
+        resolve(result);
       };
-      img.onerror = reject;
+      img.onerror = function() { reject(new Error('Gagal memuat gambar')); };
       img.src = e.target.result;
     };
-    reader.onerror = reject;
+    reader.onerror = function() { reject(new Error('Gagal membaca file')); };
     reader.readAsDataURL(file);
   });
 }
@@ -512,13 +673,13 @@ async function hF(inp) {
   var bar = document.getElementById('compressBar'), fill = document.getElementById('compressFill');
   bar.classList.add('active'); fill.style.width = '20%';
   try {
-    /* Kompresi untuk preview — ukuran kecil */
+    /* Kompresi untuk preview */
     var compressed = await kompresiGambar(f, 600, 0.7);
     fill.style.width = '80%'; sFileBase64 = compressed;
     document.getElementById('uP').style.display = 'none';
     var v = document.getElementById('uV'); v.style.display = 'block';
     var sizeKB = Math.round((compressed.length * 3 / 4) / 1024);
-    v.innerHTML = '<img src="' + compressed + '" alt="Preview"><p class="text-[10px] mt-2" style="color:var(--muted);font-weight:600;">' + sizeKB + 'KB <span style="color:var(--glow);font-weight:800;"><i class="fa-solid fa-cloud-arrow-up" style="font-size:9px;"></i> Akan diarsip ke Drive</span> <span style="color:var(--accent2);cursor:pointer;font-weight:800;" onclick="cFl(event)">Hapus</span></p>';
+    v.innerHTML = '<img src="' + compressed + '" alt="Preview" style="max-height:100px;border-radius:8px;object-fit:contain;"><p class="text-[10px] mt-2" style="color:var(--muted);font-weight:600;">' + sizeKB + 'KB <span style="color:var(--glow);font-weight:800;"><i class="fa-solid fa-cloud-arrow-up" style="font-size:9px;"></i> Akan diarsip ke Drive</span> <span style="color:var(--accent2);cursor:pointer;font-weight:800;" onclick="cFl(event)">Hapus</span></p>';
     fill.style.width = '100%';
     setTimeout(function() { bar.classList.remove('active'); fill.style.width = '0%'; }, 500);
   } catch (err) {
@@ -535,7 +696,7 @@ function cFl(e) {
 }
 
 /* ==============================================
-   STEP INDICATOR untuk proses upload
+   STEP INDICATOR
    ============================================== */
 function setStep(id, state) {
   var el = document.getElementById(id);
@@ -561,7 +722,9 @@ function resetSteps() {
 }
 
 /* ==============================================
-   SUBMIT — DENGAN UPLOAD GOOGLE DRIVE
+   SUBMIT — DENGAN DUA STRATEGI GAMBAR
+   1. Kompresi kecil → simpan ke Firebase (untuk tampil di mading)
+   2. Kompresi sedang → upload ke Drive (untuk arsip)
    ============================================== */
 function setSubmitLoading(on, txt) {
   var btn = document.getElementById('bS'), icon = document.getElementById('bSI'), t = document.getElementById('bST');
@@ -601,52 +764,50 @@ async function subK() {
   if (sCat === 'foto' && !sFile && !sFileBase64 && !is) { tst('Upload foto atau tulis caption', 'er'); return; }
 
   var hasImage = !!sFileBase64;
-  var imageUrl = '';
+  var imageUrlForFirebase = ''; /* Gambar kecil untuk tampil di mading */
   var driveArchived = false;
 
-  /* Tampilkan step indicator jika ada gambar */
   if (hasImage) {
     document.getElementById('driveSteps').style.display = 'block';
     resetSteps();
   }
 
-  /* LANGKAH 1: Kompresi ulang dengan kualitas lebih tinggi untuk arsip */
+  /* LANGKAH 1: Siapkan dua versi gambar */
   if (hasImage && sFile) {
     setSubmitLoading(true, 'Memproses gambar...');
     setStep('ds1', 'active');
     try {
-      /* Kompresi untuk arsip: 800px, kualitas 0.85 — lebih bagus untuk Drive */
-      sFileBase64 = await kompresiGambar(sFile, 800, 0.85);
+      /* Versi kecil untuk Firebase (500px, 0.55) — pasti muat */
+      imageUrlForFirebase = await kompresiGambar(sFile, 500, 0.55);
       setStep('ds1', 'done');
+
+      /* LANGKAH 2: Upload versi arsip ke Google Drive (800px, 0.8) */
+      setSubmitLoading(true, 'Mengarsipkan gambar ke Drive...');
+      setStep('ds2', 'active');
+      var archiveImage = await kompresiGambar(sFile, 800, 0.8);
+      var safeName = (nm || 'siswa').replace(/[^a-zA-Z0-9]/g, '_') + '_' + (sCat || 'karya') + '_' + Date.now() + '.jpg';
+      var driveUrl = await uploadToDrive(archiveImage, safeName);
+
+      if (driveUrl) {
+        driveArchived = true;
+        setStep('ds2', 'done');
+        setSubmitLoading(true, 'Gambar tersimpan di Drive! Menyimpan...');
+      } else {
+        setStep('ds2', 'fail');
+        /* Tetap lanjut — gambar kecil sudah ada untuk Firebase */
+        setSubmitLoading(true, 'Drive tidak tersedia, gambar tetap disimpan...');
+      }
     } catch (e) {
+      console.error('Gagal memproses gambar:', e);
       setStep('ds1', 'fail');
       setSubmitLoading(false);
-      tst('Gagal memproses gambar', 'er');
+      tst('Gagal memproses gambar. Coba gambar lain.', 'er');
       return;
     }
   } else if (hasImage) {
+    /* Sudah terkompresi dari preview, gunakan langsung */
+    imageUrlForFirebase = sFileBase64;
     setStep('ds1', 'done');
-  }
-
-  /* LANGKAH 2: Upload ke Google Drive */
-  if (hasImage) {
-    setSubmitLoading(true, 'Mengarsipkan gambar ke Drive...');
-    setStep('ds2', 'active');
-    var safeName = (nm || 'siswa').replace(/[^a-zA-Z0-9]/g, '_') + '_' + (sCat || 'karya') + '_' + Date.now() + '.jpg';
-    var driveUrl = await uploadToDrive(sFileBase64, safeName);
-
-    if (driveUrl) {
-      imageUrl = driveUrl;
-      driveArchived = true;
-      setStep('ds2', 'done');
-      setSubmitLoading(true, 'Gambar tersimpan di Drive! Menyimpan...');
-    } else {
-      /* Fallback ke base64 jika Drive gagal */
-      imageUrl = sFileBase64;
-      driveArchived = false;
-      setStep('ds2', 'fail');
-      setSubmitLoading(true, 'Drive tidak tersedia, mode lokal...');
-    }
   }
 
   /* LANGKAH 3: Simpan ke Firebase */
@@ -659,10 +820,23 @@ async function subK() {
       kategori: sCat,
       judul: jd,
       isi: is,
-      imageUrl: imageUrl,
+      imageUrl: imageUrlForFirebase,
       driveArchived: driveArchived,
       timestamp: Date.now()
     };
+
+    /* Validasi ukuran data sebelum kirim ke Firebase */
+    var dataSize = JSON.stringify(data).length;
+    console.log('Ukuran data yang akan dikirim:', Math.round(dataSize / 1024), 'KB');
+
+    if (dataSize > 8 * 1024 * 1024) {
+      /* Data terlalu besar, kurangi kualitas gambar */
+      console.warn('Data terlalu besar, mengurangi kualitas...');
+      if (sFile) {
+        imageUrlForFirebase = await kompresiGambar(sFile, 400, 0.4);
+        data.imageUrl = imageUrlForFirebase;
+      }
+    }
 
     if (db) {
       await db.ref('karya').push(data);
@@ -688,7 +862,7 @@ async function subK() {
     if (driveArchived) {
       tst('Dipublikasikan & gambar tersimpan di Google Drive!', 'ok');
     } else if (hasImage) {
-      tst('Karya dipublikasikan! (gambar mode lokal, cek Drive API)', 'ok');
+      tst('Karya dipublikasikan! (gambar mode lokal)', 'ok');
     } else {
       tst('Karyamu berhasil dipublikasikan!', 'ok');
     }
@@ -696,12 +870,26 @@ async function subK() {
     console.error('Submit error:', e);
     if (hasImage) setStep('ds3', 'fail');
     setSubmitLoading(false);
-    tst('Gagal mengirim. Coba lagi.', 'er');
+
+    /* Jika error karena data terlalu besar, coba lagi tanpa gambar */
+    if (e.message && (e.message.indexOf('PAYLOAD_TOO_LARGE') !== -1 || e.code === 'PAYLOAD_TOO_LARGE')) {
+      tst('Gambar terlalu besar untuk database. Mengirim tanpa gambar...', 'er');
+      try {
+        data.imageUrl = '';
+        data.driveArchived = false;
+        await db.ref('karya').push(data);
+        tst('Karya tersimpan tanpa gambar (arsip Drive tetap ada)', 'ok');
+      } catch (e2) {
+        tst('Gagal mengirim. Coba lagi.', 'er');
+      }
+    } else {
+      tst('Gagal mengirim. Coba lagi.', 'er');
+    }
   }
 }
 
 /* ==============================================
-   HAPUS — Dari Firebase saja (arsip Drive tetap ada)
+   HAPUS
    ============================================== */
 function showConfirm(id, e) {
   e.stopPropagation();
@@ -749,19 +937,36 @@ function rK() {
   if (!fl.length) { g.innerHTML = ''; em.style.display = 'block'; return; }
   em.style.display = 'none';
 
+  /* Dapatkan index global untuk fungsi opR */
   g.innerHTML = fl.map(function(k, i) {
+    /* Cari index di KL (global) untuk opR */
+    var globalIdx = KL.indexOf(k);
+    if (globalIdx === -1) globalIdx = i;
+
     var s = sH(k.timestamp), ug = s <= 1, ac = gAC(k.nama), ini = gI(k.nama);
-    var hasImg = k.imageUrl && k.imageUrl.length > 10;
+    var hasImg = isValidImageUrl(k.imageUrl);
     var isQ = k.kategori === 'quotes';
     var archived = k.driveArchived;
 
+    var imgHtml = '';
+    if (hasImg) {
+      imgHtml = '<div class="pn"></div>' + renderImage(k.imageUrl, k.judul || 'Gambar', 'kimg', globalIdx);
+    } else if (k.imageUrl) {
+      /* Ada data imageUrl tapi tidak valid → tampilkan placeholder */
+      imgHtml = '<div class="pn"></div><div class="img-placeholder" onclick="opR(' + globalIdx + ')">' +
+        '<i class="fa-solid fa-image"></i>' +
+        '<span>Gambar tidak tersedia</span></div>';
+    } else {
+      imgHtml = '<div class="pn"></div>';
+    }
+
     return '<div class="kc c-' + k.kategori + ' ki" style="animation-delay:' + Math.min(i * 0.05, 0.4) + 's;">' +
       '<button class="bd" onclick="showConfirm(\'' + k.id + '\',event)" title="Hapus"><i class="fa-solid fa-trash-can"></i></button>' +
-      (hasImg ? '<div class="pn"></div><img src="' + k.imageUrl + '" alt="' + (k.judul || 'Gambar') + '" class="kimg" onclick="opR(' + i + ')" loading="lazy" onerror="this.style.display=\'none\'">' : (!hasImg ? '<div class="pn"></div>' : '')) +
+      imgHtml +
       '<div class="p-4 ' + (hasImg ? 'pt-3' : 'pt-6') + '">' +
       (isQ ? '<div style="font-size:36px;line-height:1;color:var(--accent);opacity:.2;font-family:\'Baloo 2\',cursive;margin-bottom:-10px;">"</div>' : '') +
-      (k.judul ? '<h3 class="ft font-bold text-sm mb-1.5 leading-snug" style="color:var(--fg);cursor:pointer;" onclick="opR(' + i + ')">' + k.judul + '</h3>' : '') +
-      (k.isi ? '<p class="text-xs leading-relaxed mb-3 ' + (isQ ? 'ft font-bold italic' : '') + '" style="color:var(--muted);display:-webkit-box;-webkit-line-clamp:' + (isQ ? '3' : '4') + ';-webkit-box-orient:vertical;overflow:hidden;cursor:pointer;" onclick="opR(' + i + ')">' + k.isi + '</p>' : '') +
+      (k.judul ? '<h3 class="ft font-bold text-sm mb-1.5 leading-snug" style="color:var(--fg);cursor:pointer;" onclick="opR(' + globalIdx + ')">' + k.judul + '</h3>' : '') +
+      (k.isi ? '<p class="text-xs leading-relaxed mb-3 ' + (isQ ? 'ft font-bold italic' : '') + '" style="color:var(--muted);display:-webkit-box;-webkit-line-clamp:' + (isQ ? '3' : '4') + ';-webkit-box-orient:vertical;overflow:hidden;cursor:pointer;" onclick="opR(' + globalIdx + ')">' + k.isi + '</p>' : '') +
       '<div class="flex items-center justify-between">' +
       '<div class="ab"><div class="aa" style="background:' + ac + ';">' + ini + '</div><span style="color:var(--fg);">' + k.nama + '</span></div>' +
       '<div class="tb"><i class="fa-solid ' + (cI[k.kategori] || 'fa-star') + '" style="font-size:8px;"></i>' + (cL[k.kategori] || k.kategori) + '</div>' +
@@ -780,9 +985,17 @@ function rK() {
    ============================================== */
 function opR(i) {
   var k = KL[i]; if (!k) return;
-  var s = sH(k.timestamp), ac = gAC(k.nama), hasImg = k.imageUrl && k.imageUrl.length > 10;
+  var s = sH(k.timestamp), ac = gAC(k.nama), hasImg = isValidImageUrl(k.imageUrl);
+
+  var imgSection = '';
+  if (hasImg) {
+    imgSection = renderModalImage(k.imageUrl, k.judul);
+  } else if (k.imageUrl) {
+    imgSection = '<div class="img-placeholder-modal"><i class="fa-solid fa-image"></i><span>Gambar tidak tersedia</span></div>';
+  }
+
   document.getElementById('rdBox').innerHTML =
-    (hasImg ? '<img src="' + k.imageUrl + '" alt="' + k.judul + '" style="width:100%;max-height:220px;object-fit:cover;border-radius:20px 20px 0 0;" onerror="this.style.display=\'none\'">' : '') +
+    imgSection +
     '<div class="p-5 ' + (hasImg ? '' : 'pt-7') + '">' +
     '<div class="flex items-center gap-2 mb-3 flex-wrap">' +
     '<span class="tb"><i class="fa-solid ' + (cI[k.kategori] || 'fa-star') + '" style="font-size:8px;"></i> ' + (cL[k.kategori] || k.kategori) + '</span>' +
@@ -835,8 +1048,12 @@ cAnimasi();
 uC();
 uD();
 rK();
-setInterval(uC, 1000);
-if (!db) setTimeout(function() { tst('Firebase tidak tersedia — karya hanya lokal', 'er'); }, 1500);
+setInterval(uC, 10000);
+setInterval(function() {
+  uD();
+  /* Re-render untuk update waktu "X hari lagi" */
+  rK();
+}, 60000);
 </script>
 </body>
 </html>
