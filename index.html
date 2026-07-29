@@ -4,328 +4,675 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mading Digital — SDN Majalengka Wetan VIII</title>
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
   <style>
-    :root{
-      --bg:#fdf6ec;--fg:#3d2c1e;--muted:#8a7562;
-      --accent:#ff6b35;--accent2:#e63946;--card:#ffffff;
-      --card2:#fff8f0;--border:#f0dcc8;--glow:#2ec4b6;
-      --pink:#ff85a1;--yellow:#ffd166;--blue:#118ab2;
-      --green:#06d6a0;--purple:#a855f7;
+    :root {
+      --bg: #f8f6f3;
+      --bg2: #f0ede8;
+      --fg: #1a1a2e;
+      --fg2: #3d3d56;
+      --muted: #8b8b9e;
+      --accent: #e85d3a;
+      --accent2: #c0392b;
+      --card: #ffffff;
+      --card2: #fafaf8;
+      --border: #e8e5df;
+      --border2: #d9d5cd;
+      --teal: #0d9488;
+      --teal-light: #ccfbf1;
+      --pink: #ec4899;
+      --blue: #2563eb;
+      --amber: #d97706;
+      --green: #16a34a;
+      --purple: #7c3aed;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.03);
+      --shadow-md: 0 4px 16px rgba(0,0,0,.06), 0 1px 4px rgba(0,0,0,.04);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.04);
+      --shadow-xl: 0 20px 60px rgba(0,0,0,.12), 0 8px 20px rgba(0,0,0,.06);
+      --radius: 16px;
+      --radius-lg: 24px;
     }
-    *{margin:0;padding:0;box-sizing:border-box;}
-    body{background:var(--bg);color:var(--fg);font-family:'Nunito',sans-serif;overflow-x:hidden;min-height:100vh;}
-    .ft{font-family:'Baloo 2',cursive;}
 
-    /* Background Scene */
-    .bg-s{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
-    .cloud{position:absolute;background:#fff;border-radius:50px;box-shadow:0 4px 15px rgba(0,0,0,.04);}
-    .cloud::before,.cloud::after{content:'';position:absolute;background:#fff;border-radius:50%;}
-    .c1{width:120px;height:40px;top:8%;animation:drift 28s linear infinite;}
-    .c1::before{width:50px;height:50px;top:-25px;left:20px;}
-    .c1::after{width:65px;height:55px;top:-30px;left:50px;}
-    .c2{width:90px;height:30px;top:18%;animation:drift 35s linear infinite;animation-delay:-12s;opacity:.7;}
-    .c2::before{width:40px;height:40px;top:-20px;left:15px;}
-    .c2::after{width:50px;height:45px;top:-22px;left:38px;}
-    .c3{width:140px;height:45px;top:5%;animation:drift 32s linear infinite;animation-delay:-20s;opacity:.5;}
-    .c3::before{width:60px;height:55px;top:-28px;left:25px;}
-    .c3::after{width:75px;height:60px;top:-32px;left:60px;}
-    @keyframes drift{from{left:-200px;}to{left:110vw;}}
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    .ft { font-family: 'Playfair Display', serif; }
 
-    .sun{position:absolute;top:30px;right:60px;width:80px;height:80px;background:radial-gradient(circle,#ffd166 40%,#ffba08 100%);border-radius:50%;box-shadow:0 0 40px rgba(255,209,102,.4),0 0 80px rgba(255,186,8,.15);animation:sunPulse 4s ease-in-out infinite;}
-    .sun::before{content:'';position:absolute;inset:-15px;border-radius:50%;background:radial-gradient(circle,rgba(255,209,102,.2),transparent 70%);animation:sunPulse 4s ease-in-out infinite reverse;}
-    @keyframes sunPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+    /* Ambient background */
+    .bg-ambient {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+    }
+    .bg-blob {
+      position: absolute; border-radius: 50%; filter: blur(80px); opacity: .35;
+      animation: blobFloat 20s ease-in-out infinite alternate;
+    }
+    .bg-blob:nth-child(1) {
+      width: 400px; height: 400px; top: -100px; right: -100px;
+      background: radial-gradient(circle, rgba(232,93,58,.2), transparent 70%);
+    }
+    .bg-blob:nth-child(2) {
+      width: 350px; height: 350px; bottom: -80px; left: -80px;
+      background: radial-gradient(circle, rgba(13,148,136,.15), transparent 70%);
+      animation-delay: -7s; animation-duration: 25s;
+    }
+    .bg-blob:nth-child(3) {
+      width: 250px; height: 250px; top: 40%; left: 50%;
+      background: radial-gradient(circle, rgba(236,72,153,.1), transparent 70%);
+      animation-delay: -14s; animation-duration: 30s;
+    }
+    @keyframes blobFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(30px, -20px) scale(1.05); }
+      66% { transform: translate(-20px, 15px) scale(.95); }
+      100% { transform: translate(10px, -10px) scale(1.02); }
+    }
 
-    .sparkle{position:absolute;font-size:14px;animation:twinkle 2s ease-in-out infinite;}
-    @keyframes twinkle{0%,100%{opacity:.2;transform:scale(.8) rotate(0deg);}50%{opacity:1;transform:scale(1.2) rotate(20deg);}}
+    /* Grid pattern overlay */
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: linear-gradient(rgba(0,0,0,.018) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(0,0,0,.018) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
 
-    .balloon{position:absolute;bottom:-120px;animation:floatUp linear infinite;}
-    .balloon-body{width:30px;height:38px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;position:relative;}
-    .balloon-body::after{content:'';position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;}
-    .balloon-string{width:1px;height:30px;background:var(--muted);margin:0 auto;opacity:.4;}
-    @keyframes floatUp{0%{transform:translateY(0) rotate(-3deg);opacity:0;}5%{opacity:.85;}90%{opacity:.6;}100%{transform:translateY(-120vh) rotate(5deg);opacity:0;}}
+    /* Card styles */
+    .kc {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      position: relative;
+      overflow: hidden;
+      transition: all .4s cubic-bezier(.22,1,.36,1);
+      box-shadow: var(--shadow-sm);
+    }
+    .kc:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--border2);
+    }
 
-    .flower{position:absolute;bottom:-50px;animation:floatUp2 linear infinite;font-size:22px;}
-    @keyframes floatUp2{0%{transform:translateY(0) rotate(0deg);opacity:0;}8%{opacity:.7;}85%{opacity:.5;}100%{transform:translateY(-110vh) rotate(360deg);opacity:0;}}
+    /* Kategori border accent — subtle */
+    .c-puisi { border-top: 3px solid var(--amber); }
+    .c-cerita { border-top: 3px solid var(--blue); }
+    .c-opini { border-top: 3px solid var(--green); }
+    .c-foto { border-top: 3px solid var(--pink); }
+    .c-quotes { border-top: 3px solid var(--accent); }
+    .c-lainnya { border-top: 3px solid var(--purple); }
 
-    .grass{position:fixed;bottom:0;left:0;right:0;height:40px;z-index:1;background:linear-gradient(to top,#52b788 0%,#74c69d 60%,transparent 100%);pointer-events:none;}
-    .grass::before{content:'';position:absolute;bottom:0;left:0;right:0;height:25px;background:repeating-linear-gradient(90deg,transparent,transparent 8px,rgba(42,130,80,.3) 8px,rgba(42,130,80,.3) 10px);}
-
-    .rainbow{position:absolute;top:60px;left:50%;transform:translateX(-50%);width:300px;height:150px;border-radius:150px 150px 0 0;border:12px solid transparent;border-bottom:none;opacity:.12;background:linear-gradient(180deg, #e63946 0%, #e63946 12%, transparent 12%),linear-gradient(180deg, #ff6b35 12%, #ff6b35 24%, transparent 24%),linear-gradient(180deg, #ffd166 24%, #ffd166 36%, transparent 36%),linear-gradient(180deg, #06d6a0 36%, #06d6a0 48%, transparent 48%),linear-gradient(180deg, #118ab2 48%, #118ab2 60%, transparent 60%),linear-gradient(180deg, #a855f7 60%, #a855f7 72%, transparent 72%);-webkit-background-clip:padding-box;filter:blur(1px);}
-
-    /* Kartu Karya — diperindah */
-    .kc{background:var(--card);border:2px solid var(--border);border-radius:20px;position:relative;overflow:hidden;transition:all .35s cubic-bezier(.25,.46,.45,.94);box-shadow:0 2px 12px rgba(0,0,0,.05);}
-    .kc:hover{transform:translateY(-6px) rotate(-0.3deg);box-shadow:0 16px 40px rgba(0,0,0,.1),0 0 0 3px rgba(46,196,182,.15);border-color:var(--glow);}
-
-    .pn{width:16px;height:16px;background:radial-gradient(circle at 38% 32%,#ff85a1,#e63946);border-radius:50%;position:absolute;top:-8px;left:50%;transform:translateX(-50%);box-shadow:0 2px 6px rgba(0,0,0,.2);z-index:10;}
-    .pn::after{content:'';position:absolute;width:5px;height:5px;background:rgba(255,255,255,.5);border-radius:50%;top:3px;left:4px;}
-
-    .c-puisi{border-left:5px solid var(--yellow);}
-    .c-cerita{border-left:5px solid var(--blue);}
-    .c-opini{border-left:5px solid var(--green);}
-    .c-foto{border-left:5px solid var(--pink);}
-    .c-quotes{border-left:5px solid var(--accent);}
-    .c-lainnya{border-left:5px solid var(--purple);}
+    /* Gambar kartu — lebih besar & jelas */
+    .kimg-wrap {
+      position: relative; width: 100%; overflow: hidden;
+      background: var(--bg2); cursor: pointer;
+    }
+    .kimg-wrap::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,.04) 100%);
+      pointer-events: none; transition: opacity .3s;
+    }
+    .kimg-wrap:hover::after { opacity: 0; }
+    .kimg {
+      width: 100%; height: 220px; object-fit: cover; display: block;
+      transition: transform .6s cubic-bezier(.22,1,.36,1), filter .3s;
+    }
+    .kimg-wrap:hover .kimg { transform: scale(1.04); filter: brightness(1.03); }
+    .kimg-zoom-icon {
+      position: absolute; bottom: 10px; right: 10px; z-index: 5;
+      width: 32px; height: 32px; border-radius: 10px;
+      background: rgba(255,255,255,.85); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--fg2); font-size: 12px; opacity: 0;
+      transition: all .3s; border: 1px solid rgba(0,0,0,.06);
+    }
+    .kimg-wrap:hover .kimg-zoom-icon { opacity: 1; transform: scale(1); }
 
     /* FAB */
-    .fab{position:fixed;bottom:60px;right:24px;z-index:100;width:60px;height:60px;border-radius:50%;border:3px solid #fff;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(255,107,53,.35);transition:all .3s;}
-    .fab:hover{transform:scale(1.15) rotate(90deg);box-shadow:0 6px 28px rgba(255,107,53,.5);}
-    .fab.locked{display:none !important;}
+    .fab {
+      position: fixed; bottom: 28px; right: 24px; z-index: 100;
+      width: 56px; height: 56px; border-radius: 16px; border: none;
+      cursor: pointer; color: #fff; font-size: 20px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--fg);
+      box-shadow: 0 8px 30px rgba(26,26,46,.25);
+      transition: all .35s cubic-bezier(.22,1,.36,1);
+    }
+    .fab:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 12px 40px rgba(26,26,46,.35);
+    }
+    .fab:active { transform: translateY(0) scale(.97); }
+    .fab.locked { display: none !important; }
 
     /* Panel Overlay */
-    .po{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .4s;}
-    .po.open{opacity:1;pointer-events:all;}
-    .pnl{position:fixed;bottom:0;left:0;right:0;z-index:201;background:var(--card);border-top:3px solid var(--border);border-radius:24px 24px 0 0;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform .5s cubic-bezier(.25,.46,.45,.94);}
-    .po.open .pnl{transform:translateY(0);}
-    .ph{width:48px;height:5px;background:var(--border);border-radius:3px;margin:14px auto 0;}
+    .po {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(26,26,46,.4); backdrop-filter: blur(12px);
+      opacity: 0; pointer-events: none; transition: opacity .35s;
+    }
+    .po.open { opacity: 1; pointer-events: all; }
+    .pnl {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 201;
+      background: var(--card); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      max-height: 92vh; overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform .5s cubic-bezier(.22,1,.36,1);
+      box-shadow: 0 -8px 40px rgba(0,0,0,.1);
+    }
+    .po.open .pnl { transform: translateY(0); }
+    .ph { width: 40px; height: 4px; background: var(--border2); border-radius: 2px; margin: 12px auto 0; }
 
     /* Input */
-    .ip{width:100%;padding:12px 16px;border-radius:12px;border:2px solid var(--border);background:var(--card2);color:var(--fg);font-size:14px;font-family:'Nunito',sans-serif;font-weight:600;transition:all .3s;outline:none;}
-    .ip:focus{border-color:var(--glow);box-shadow:0 0 0 3px rgba(46,196,182,.12);}
-    .ip::placeholder{color:var(--muted);opacity:.5;font-weight:400;}
-    textarea.ip{resize:vertical;min-height:120px;line-height:1.8;}
+    .ip {
+      width: 100%; padding: 11px 14px; border-radius: 12px;
+      border: 1.5px solid var(--border); background: var(--card2);
+      color: var(--fg); font-size: 14px;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 500;
+      transition: all .25s; outline: none;
+    }
+    .ip:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(13,148,136,.1);
+      background: #fff;
+    }
+    .ip::placeholder { color: var(--muted); opacity: .6; font-weight: 400; }
+    textarea.ip { resize: vertical; min-height: 110px; line-height: 1.7; }
 
     /* Chip kategori */
-    .ch{padding:8px 16px;border-radius:99px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid var(--border);background:var(--card);color:var(--muted);transition:all .3s;white-space:nowrap;}
-    .ch:hover{border-color:var(--glow);color:var(--fg);transform:scale(1.03);}
-    .ch.s{background:var(--glow);color:#fff;border-color:var(--glow);box-shadow:0 2px 10px rgba(46,196,182,.25);}
+    .ch {
+      padding: 7px 14px; border-radius: 10px; font-size: 12px; font-weight: 600;
+      cursor: pointer; border: 1.5px solid var(--border); background: var(--card);
+      color: var(--muted); transition: all .25s; white-space: nowrap;
+    }
+    .ch:hover { border-color: var(--fg2); color: var(--fg2); }
+    .ch.s {
+      background: var(--fg); color: #fff; border-color: var(--fg);
+      box-shadow: 0 2px 8px rgba(26,26,46,.2);
+    }
 
     /* Upload Zone */
-    .uz{border:2.5px dashed var(--border);border-radius:14px;padding:24px;text-align:center;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;background:var(--card2);}
-    .uz:hover,.uz.dg{border-color:var(--glow);background:rgba(46,196,182,.05);}
-    .uz img{max-height:100px;border-radius:8px;object-fit:contain;}
+    .uz {
+      border: 2px dashed var(--border); border-radius: 14px; padding: 28px;
+      text-align: center; cursor: pointer; transition: all .3s;
+      background: var(--card2);
+    }
+    .uz:hover, .uz.dg {
+      border-color: var(--teal); background: rgba(13,148,136,.03);
+    }
+    .uz img { max-height: 120px; border-radius: 10px; object-fit: contain; }
 
-    /* Tombol Submit */
-    .bs{padding:14px 32px;border-radius:14px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:15px;font-weight:800;font-family:'Nunito',sans-serif;transition:all .3s;display:flex;align-items:center;gap:8px;justify-content:center;box-shadow:0 4px 15px rgba(255,107,53,.25);}
-    .bs:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(255,107,53,.35);}
-    .bs:disabled{opacity:.5;cursor:not-allowed;transform:none !important;box-shadow:none !important;}
+    /* Submit button */
+    .bs {
+      padding: 13px 28px; border-radius: 14px; border: none; cursor: pointer;
+      background: var(--fg); color: #fff; font-size: 14px; font-weight: 700;
+      font-family: 'Plus Jakarta Sans', sans-serif; transition: all .3s;
+      display: flex; align-items: center; gap: 8px; justify-content: center;
+      box-shadow: 0 4px 16px rgba(26,26,46,.2);
+    }
+    .bs:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(26,26,46,.3); }
+    .bs:disabled { opacity: .4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
     /* Spinner */
-    .sp-in{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spr .7s linear infinite;flex-shrink:0;}
-    .sp{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--glow);border-radius:50%;animation:spr .6s linear infinite;}
-    @keyframes spr{to{transform:rotate(360deg);}}
+    .sp-in {
+      width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,.2); border-top-color: #fff;
+      border-radius: 50%; animation: spr .6s linear infinite; flex-shrink: 0;
+    }
+    .sp {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border); border-top-color: var(--teal);
+      border-radius: 50%; animation: spr .6s linear infinite;
+    }
+    @keyframes spr { to { transform: rotate(360deg); } }
 
     /* Tag badge */
-    .tb{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;background:rgba(255,107,53,.08);color:var(--accent);}
+    .tb {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 8px; font-size: 10px; font-weight: 700;
+      background: rgba(13,148,136,.08); color: var(--teal); text-transform: uppercase;
+      letter-spacing: .5px;
+    }
 
-    /* Tombol hapus */
-    .bd{position:absolute;top:10px;right:10px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.9);border:2px solid var(--border);color:var(--muted);font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:all .3s;z-index:10;}
-    .kc:hover .bd{opacity:1;}
-    .bd:hover{background:var(--accent2);color:#fff;border-color:var(--accent2);}
+    /* Delete button */
+    .bd {
+      position: absolute; top: 8px; right: 8px; width: 28px; height: 28px;
+      border-radius: 8px; background: rgba(255,255,255,.9); backdrop-filter: blur(8px);
+      border: 1px solid rgba(0,0,0,.06); color: var(--muted); font-size: 10px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: all .25s; z-index: 10;
+    }
+    .kc:hover .bd { opacity: 1; }
+    .bd:hover { background: var(--accent2); color: #fff; border-color: var(--accent2); }
 
-    /* Avatar badge */
-    .ab{display:inline-flex;align-items:center;gap:5px;padding:2px 8px 2px 2px;border-radius:99px;font-size:10px;font-weight:700;background:var(--card2);border:1px solid var(--border);}
-    .aa{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;flex-shrink:0;}
+    /* Avatar */
+    .ab {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 2px 8px 2px 2px; border-radius: 99px; font-size: 10px; font-weight: 700;
+      background: var(--card2); border: 1px solid var(--border);
+    }
+    .aa {
+      width: 20px; height: 20px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 8px; font-weight: 800; color: #fff; flex-shrink: 0;
+    }
 
     /* Sisa hari */
-    .sw{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:3px;font-weight:600;}
+    .sw { font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 3px; font-weight: 500; }
 
     /* Toast */
-    .tc{position:fixed;top:16px;right:16px;z-index:300;display:flex;flex-direction:column;gap:8px;}
-    .ts{padding:12px 18px;border-radius:12px;font-size:13px;font-weight:700;background:var(--card);border:2px solid var(--border);color:var(--fg);box-shadow:0 6px 25px rgba(0,0,0,.1);transform:translateX(120%);transition:transform .4s cubic-bezier(.25,.46,.45,.94);display:flex;align-items:center;gap:8px;}
-    .ts.sh{transform:translateX(0);}
-    .ts.ok{border-color:var(--glow);} .ts.er{border-color:var(--accent2);}
+    .tc { position: fixed; top: 20px; right: 20px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+    .ts {
+      padding: 12px 18px; border-radius: 12px; font-size: 13px; font-weight: 600;
+      background: var(--card); border: 1px solid var(--border); color: var(--fg);
+      box-shadow: var(--shadow-lg); transform: translateX(120%);
+      transition: transform .4s cubic-bezier(.22,1,.36,1);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .ts.sh { transform: translateX(0); }
+    .ts.ok { border-color: var(--teal); } .ts.er { border-color: var(--accent2); }
 
-    /* Status bar */
-    .fbs{position:fixed;bottom:130px;left:12px;z-index:90;padding:4px 10px;border-radius:99px;font-size:9px;font-weight:700;display:flex;align-items:center;gap:4px;backdrop-filter:blur(8px);transition:all .4s;max-width:calc(100vw - 100px);}
-    .fbs.on{background:rgba(46,196,182,.12);color:var(--glow);border:1px solid rgba(46,196,182,.3);}
-    .fbs.of{background:rgba(230,57,70,.1);color:var(--accent2);border:1px solid rgba(230,57,70,.25);}
-    .fbs.ld{background:rgba(255,107,53,.1);color:var(--accent);border:1px solid rgba(255,107,53,.25);}
-    .fd2{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
-    .fbs.on .fd2{background:var(--glow);animation:pd 2s ease-out infinite;}
-    .fbs.of .fd2{background:var(--accent2);} .fbs.ld .fd2{background:var(--accent);animation:bk 1s step-end infinite;}
-    @keyframes pd{0%{transform:scale(1);opacity:.6;}100%{transform:scale(2.5);opacity:0;}}
-    @keyframes bk{50%{opacity:0;}}
+    /* Firebase status */
+    .fbs {
+      position: fixed; bottom: 96px; left: 14px; z-index: 90;
+      padding: 5px 12px; border-radius: 10px; font-size: 9px; font-weight: 600;
+      display: flex; align-items: center; gap: 5px;
+      backdrop-filter: blur(12px); transition: all .4s; max-width: calc(100vw - 100px);
+    }
+    .fbs.on { background: rgba(13,148,136,.1); color: var(--teal); border: 1px solid rgba(13,148,136,.2); }
+    .fbs.of { background: rgba(192,57,43,.08); color: var(--accent2); border: 1px solid rgba(192,57,43,.15); }
+    .fbs.ld { background: rgba(217,119,6,.08); color: var(--amber); border: 1px solid rgba(217,119,6,.15); }
+    .fd2 { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+    .fbs.on .fd2 { background: var(--teal); animation: pd 2s ease-out infinite; }
+    .fbs.of .fd2 { background: var(--accent2); }
+    .fbs.ld .fd2 { background: var(--amber); animation: bk 1s step-end infinite; }
+    @keyframes pd { 0%{transform:scale(1);opacity:.6;}100%{transform:scale(2.5);opacity:0;} }
+    @keyframes bk { 50%{opacity:0;} }
 
-    /* ======== MODAL BACA — LEBIH BESAR & LEBIH BAGUS ======== */
-    .mb{position:fixed;inset:0;z-index:250;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .4s;padding:16px;}
-    .mb.open{opacity:1;pointer-events:all;}
-    .mx{background:var(--card);border:2px solid var(--border);border-radius:24px;max-width:680px;width:100%;max-height:92vh;overflow-y:auto;transform:scale(.92) translateY(20px);transition:transform .4s cubic-bezier(.25,.46,.45,.94);box-shadow:0 24px 80px rgba(0,0,0,.2);}
-    .mb.open .mx{transform:scale(1) translateY(0);}
+    /* Modal Baca */
+    .mb {
+      position: fixed; inset: 0; z-index: 250;
+      background: rgba(26,26,46,.5); backdrop-filter: blur(16px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity .35s; padding: 20px;
+    }
+    .mb.open { opacity: 1; pointer-events: all; }
+    .mx {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); max-width: 720px; width: 100%;
+      max-height: 90vh; overflow-y: auto;
+      transform: scale(.94) translateY(12px);
+      transition: transform .4s cubic-bezier(.22,1,.36,1);
+      box-shadow: var(--shadow-xl);
+    }
+    .mb.open .mx { transform: scale(1) translateY(0); }
 
-    /* Gambar di modal — besar, tidak kepotong, landscape & potret */
-    .modal-img-wrap{position:relative;width:100%;background:#f5efe6;overflow:hidden;border-radius:22px 22px 0 0;}
-    .modal-img-wrap img{width:100%;height:auto;max-height:75vh;object-fit:contain;display:block;cursor:zoom-in;transition:transform .3s;}
-    .modal-img-wrap img:hover{transform:scale(1.01);}
-    .modal-img-zoom-hint{position:absolute;bottom:12px;right:12px;padding:5px 12px;border-radius:99px;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;gap:5px;pointer-events:none;transition:opacity .3s;}
-    .modal-img-close-zoom{position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);border:2px solid rgba(255,255,255,.3);color:#fff;font-size:16px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:20;transition:all .3s;}
-    .modal-img-close-zoom:hover{background:var(--accent2);border-color:var(--accent2);transform:scale(1.1);}
+    /* Modal gambar — besar & jelas */
+    .modal-img-wrap {
+      position: relative; width: 100%; background: #f5f3f0; overflow: hidden;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+    .modal-img-wrap img {
+      width: 100%; height: auto; max-height: 70vh; object-fit: contain;
+      display: block; cursor: zoom-in; transition: transform .3s;
+      background: #f5f3f0;
+    }
+    .modal-img-wrap img:hover { transform: scale(1.01); }
+    .modal-img-hint {
+      position: absolute; bottom: 14px; right: 14px;
+      padding: 6px 14px; border-radius: 10px;
+      background: rgba(26,26,46,.6); backdrop-filter: blur(10px);
+      color: #fff; font-size: 10px; font-weight: 600;
+      display: flex; align-items: center; gap: 5px; pointer-events: none;
+    }
 
     /* Fullscreen zoom */
-    .img-fullscreen{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.92);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;cursor:zoom-out;padding:20px;}
-    .img-fullscreen.open{opacity:1;pointer-events:all;}
-    .img-fullscreen img{max-width:95vw;max-height:92vh;object-fit:contain;border-radius:8px;transition:transform .3s;box-shadow:0 0 60px rgba(0,0,0,.5);}
+    .img-fullscreen {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(10,10,20,.95); backdrop-filter: blur(20px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity .3s;
+      cursor: zoom-out; padding: 24px;
+    }
+    .img-fullscreen.open { opacity: 1; pointer-events: all; }
+    .img-fullscreen img {
+      max-width: 95vw; max-height: 93vh; object-fit: contain;
+      border-radius: 8px; box-shadow: 0 0 80px rgba(0,0,0,.5);
+    }
+    .img-fullscreen .close-full {
+      position: absolute; top: 20px; right: 20px;
+      width: 40px; height: 40px; border-radius: 12px;
+      background: rgba(255,255,255,.1); backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,.15); color: #fff;
+      font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .3s;
+    }
+    .img-fullscreen .close-full:hover { background: rgba(255,255,255,.2); }
 
-    .em{text-align:center;padding:60px 20px;}
-    .ki{animation:kanim .45s ease both;}
-    @keyframes kanim{from{opacity:0;transform:translateY(16px) scale(.96);}to{opacity:1;transform:translateY(0) scale(1);}}
+    .em { text-align: center; padding: 80px 20px; }
+    .ki { animation: kanim .5s cubic-bezier(.22,1,.36,1) both; }
+    @keyframes kanim { from{opacity:0;transform:translateY(20px) scale(.97);}to{opacity:1;transform:translateY(0) scale(1);} }
 
-    /* Gambar di kartu */
-    .kimg{width:100%;max-height:160px;object-fit:cover;cursor:pointer;transition:all .3s;display:block;}
-    .kimg:hover{filter:brightness(1.05) saturate(1.1);}
+    .img-placeholder {
+      width: 100%; height: 180px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 6px;
+      background: var(--bg2); color: var(--muted); font-size: 11px; font-weight: 600;
+      cursor: pointer; transition: all .3s;
+    }
+    .img-placeholder i { font-size: 24px; color: var(--border2); }
+    .img-placeholder:hover { background: var(--bg); }
+    .img-placeholder-modal {
+      width: 100%; min-height: 140px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px; padding: 40px;
+      background: var(--bg2); color: var(--muted); font-size: 13px; font-weight: 600;
+    }
+    .img-placeholder-modal i { font-size: 32px; color: var(--border2); }
 
-    .img-placeholder{width:100%;max-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,var(--card2),rgba(46,196,182,.06));color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;transition:all .3s;}
-    .img-placeholder i{font-size:24px;color:var(--border);}
-    .img-placeholder:hover{background:rgba(46,196,182,.08);}
-    .img-placeholder-modal{width:100%;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:30px;background:linear-gradient(135deg,var(--card2),rgba(46,196,182,.06));color:var(--muted);font-size:13px;font-weight:700;}
-    .img-placeholder-modal i{font-size:36px;color:var(--border);}
+    .confirm-del {
+      position: absolute; inset: 0;
+      background: rgba(248,246,243,.96); backdrop-filter: blur(6px);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 10px; z-index: 20; border-radius: var(--radius);
+    }
 
-    .confirm-del{position:absolute;inset:0;background:rgba(253,246,236,.95);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:20;border-radius:20px;}
+    .submit-loading-overlay {
+      position: absolute; inset: 0; z-index: 30;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      background: rgba(248,246,243,.8); backdrop-filter: blur(6px);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 10px; opacity: 0; pointer-events: none; transition: opacity .3s;
+    }
+    .submit-loading-overlay.active { opacity: 1; pointer-events: all; }
+    .submit-loading-overlay .sp-in {
+      width: 28px; height: 28px; border-width: 3px;
+      border-color: rgba(26,26,46,.1); border-top-color: var(--fg);
+    }
+    .submit-loading-overlay p { font-size: 12px; color: var(--muted); font-weight: 600; }
 
-    .submit-loading-overlay{position:absolute;inset:0;z-index:30;border-radius:24px 24px 0 0;background:rgba(253,246,236,.7);backdrop-filter:blur(3px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;opacity:0;pointer-events:none;transition:opacity .3s;}
-    .submit-loading-overlay.active{opacity:1;pointer-events:all;}
-    .submit-loading-overlay .sp-in{width:28px;height:28px;border-width:3px;border-color:rgba(255,107,53,.2);border-top-color:var(--accent);}
-    .submit-loading-overlay p{font-size:12px;color:var(--muted);font-weight:700;}
+    .compress-bar {
+      width: 100%; height: 4px; background: var(--border);
+      border-radius: 2px; overflow: hidden; margin-top: 8px; display: none;
+    }
+    .compress-bar.active { display: block; }
+    .compress-bar .fill {
+      height: 100%; background: linear-gradient(90deg, var(--teal), var(--accent));
+      border-radius: 2px; width: 0%; transition: width .3s;
+    }
 
-    .compress-bar{width:100%;height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:8px;display:none;}
-    .compress-bar.active{display:block;}
-    .compress-bar .fill{height:100%;background:linear-gradient(90deg,var(--glow),var(--accent));border-radius:2px;width:0%;transition:width .3s;}
+    .archive-badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 3px 10px; border-radius: 8px; font-size: 9px; font-weight: 700;
+      background: rgba(13,148,136,.08); color: var(--teal);
+      border: 1px solid rgba(13,148,136,.15); text-transform: uppercase;
+      letter-spacing: .3px;
+    }
 
-    .archive-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;background:rgba(46,196,182,.1);color:var(--glow);border:1px solid rgba(46,196,182,.25);}
-
-    .drive-step{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:10px;font-size:11px;font-weight:700;transition:all .3s;}
-    .drive-step.pending{color:var(--muted);background:var(--card2);}
-    .drive-step.active{color:var(--accent);background:rgba(255,107,53,.08);animation:stepPulse 1s ease-in-out infinite;}
-    .drive-step.done{color:var(--glow);background:rgba(46,196,182,.08);}
-    .drive-step.fail{color:var(--accent2);background:rgba(230,57,70,.08);}
-    @keyframes stepPulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+    .drive-step {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: 600;
+      transition: all .3s;
+    }
+    .drive-step.pending { color: var(--muted); background: var(--card2); }
+    .drive-step.active { color: var(--accent); background: rgba(232,93,58,.06); animation: stepPulse 1s ease-in-out infinite; }
+    .drive-step.done { color: var(--teal); background: rgba(13,148,136,.06); }
+    .drive-step.fail { color: var(--accent2); background: rgba(192,57,43,.06); }
+    @keyframes stepPulse { 0%,100%{opacity:1;}50%{opacity:.5;} }
 
     /* Like */
-    .like-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--card2);color:var(--muted);transition:all .3s;user-select:none;}
-    .like-btn:hover{border-color:var(--accent2);color:var(--accent2);}
-    .like-btn.liked{background:rgba(230,57,70,.1);border-color:var(--accent2);color:var(--accent2);}
-    .like-btn.liked i{animation:likePop .4s ease;}
-    @keyframes likePop{0%{transform:scale(1);}30%{transform:scale(1.4);}60%{transform:scale(.9);}100%{transform:scale(1);}}
+    .like-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 12px; border-radius: 10px; font-size: 11px; font-weight: 600;
+      cursor: pointer; border: 1.5px solid var(--border); background: var(--card2);
+      color: var(--muted); transition: all .25s; user-select: none;
+    }
+    .like-btn:hover { border-color: var(--pink); color: var(--pink); }
+    .like-btn.liked { background: rgba(236,72,153,.08); border-color: var(--pink); color: var(--pink); }
+    .like-btn.liked i { animation: likePop .4s ease; }
+    @keyframes likePop { 0%{transform:scale(1);}30%{transform:scale(1.4);}60%{transform:scale(.9);}100%{transform:scale(1);} }
 
-    .comment-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--card2);color:var(--muted);transition:all .3s;}
-    .comment-btn:hover{border-color:var(--blue);color:var(--blue);}
+    .comment-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 12px; border-radius: 10px; font-size: 11px; font-weight: 600;
+      cursor: pointer; border: 1.5px solid var(--border); background: var(--card2);
+      color: var(--muted); transition: all .25s;
+    }
+    .comment-btn:hover { border-color: var(--blue); color: var(--blue); }
 
     /* Video */
-    .video-embed{width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000;margin-top:8px;}
-    .video-embed iframe{width:100%;height:100%;border:none;}
-    .video-embed-modal{width:100%;aspect-ratio:16/9;border-radius:0;overflow:hidden;background:#000;}
-    .video-embed-modal iframe{width:100%;height:100%;border:none;}
+    .video-embed { width: 100%; aspect-ratio: 16/9; border-radius: 12px; overflow: hidden; background: #000; margin-top: 10px; }
+    .video-embed iframe { width: 100%; height: 100%; border: none; }
+    .video-embed-modal { width: 100%; aspect-ratio: 16/9; border-radius: 0; overflow: hidden; background: #000; }
+    .video-embed-modal iframe { width: 100%; height: 100%; border: none; }
 
-    .video-thumb{position:relative;cursor:pointer;overflow:hidden;border-radius:12px;margin-top:8px;}
-    .video-thumb img{width:100%;max-height:160px;object-fit:cover;display:block;transition:all .3s;}
-    .video-thumb:hover img{filter:brightness(.7);}
-    .video-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
-    .video-play span{width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;transition:all .3s;backdrop-filter:blur(4px);}
-    .video-thumb:hover .video-play span{transform:scale(1.15);background:var(--accent2);}
-    .video-duration{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.8);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;}
+    .video-thumb { position: relative; cursor: pointer; overflow: hidden; border-radius: 12px; margin-top: 10px; }
+    .video-thumb img { width: 100%; height: 200px; object-fit: cover; display: block; transition: all .4s; }
+    .video-thumb:hover img { filter: brightness(.65); transform: scale(1.03); }
+    .video-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+    .video-play span {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: rgba(255,255,255,.9); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--fg); font-size: 18px; transition: all .3s;
+      box-shadow: 0 4px 20px rgba(0,0,0,.15);
+    }
+    .video-thumb:hover .video-play span { transform: scale(1.12); background: #fff; }
 
     /* Komentar */
-    .comments-section{border-top:2px solid var(--border);padding-top:14px;margin-top:14px;}
-    .comment-item{display:flex;gap:8px;padding:10px 0;border-bottom:1px solid rgba(240,220,200,.5);transition:background .2s;}
-    .comment-item:hover{background:rgba(253,246,236,.5);margin:0 -12px;padding-left:12px;padding-right:12px;border-radius:10px;}
-    .comment-item:last-child{border-bottom:none;}
-    .comment-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;flex-shrink:0;}
-    .comment-bubble{flex:1;}
-    .comment-name{font-size:11px;font-weight:800;color:var(--fg);}
-    .comment-text{font-size:12px;color:var(--muted);line-height:1.5;margin-top:2px;}
-    .comment-time{font-size:9px;color:var(--border);margin-top:2px;font-weight:600;}
-    .comment-input-row{display:flex;gap:8px;margin-top:12px;}
-    .comment-input-row input{flex:1;padding:10px 16px;border-radius:99px;border:2px solid var(--border);background:var(--card2);color:var(--fg);font-size:12px;font-family:'Nunito',sans-serif;font-weight:600;outline:none;transition:all .3s;}
-    .comment-input-row input:focus{border-color:var(--glow);box-shadow:0 0 0 3px rgba(46,196,182,.12);}
-    .comment-input-row button{width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,var(--blue),var(--glow));color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .3s;flex-shrink:0;}
-    .comment-input-row button:hover{transform:scale(1.1);}
+    .comments-section { border-top: 1px solid var(--border); padding-top: 14px; margin-top: 14px; }
+    .comment-item {
+      display: flex; gap: 10px; padding: 10px 0;
+      border-bottom: 1px solid rgba(232,229,223,.6); transition: background .2s;
+    }
+    .comment-item:last-child { border-bottom: none; }
+    .comment-avatar {
+      width: 28px; height: 28px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 800; color: #fff; flex-shrink: 0;
+    }
+    .comment-bubble { flex: 1; }
+    .comment-name { font-size: 11px; font-weight: 700; color: var(--fg); }
+    .comment-text { font-size: 12px; color: var(--fg2); line-height: 1.5; margin-top: 2px; }
+    .comment-time { font-size: 9px; color: var(--muted); margin-top: 2px; font-weight: 500; }
+    .comment-input-row { display: flex; gap: 8px; margin-top: 12px; }
+    .comment-input-row input {
+      flex: 1; padding: 10px 14px; border-radius: 12px;
+      border: 1.5px solid var(--border); background: var(--card2);
+      color: var(--fg); font-size: 12px;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 500;
+      outline: none; transition: all .25s;
+    }
+    .comment-input-row input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(13,148,136,.1); }
+    .comment-input-row button {
+      width: 40px; height: 40px; border-radius: 12px; border: none;
+      cursor: pointer; background: var(--fg); color: #fff; font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .25s; flex-shrink: 0;
+    }
+    .comment-input-row button:hover { transform: scale(1.05); }
 
     /* Notifikasi */
-    .notif-bell{position:relative;cursor:pointer;width:40px;height:40px;border-radius:12px;border:2px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:16px;transition:all .3s;}
-    .notif-bell:hover{border-color:var(--accent);color:var(--accent);}
-    .notif-badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:99px;background:var(--accent2);color:#fff;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--card);animation:badgePop .3s ease;}
-    @keyframes badgePop{0%{transform:scale(0);}60%{transform:scale(1.2);}100%{transform:scale(1);}}
+    .notif-bell {
+      position: relative; cursor: pointer; width: 40px; height: 40px;
+      border-radius: 12px; border: 1.5px solid var(--border); background: var(--card);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted); font-size: 15px; transition: all .25s;
+    }
+    .notif-bell:hover { border-color: var(--fg2); color: var(--fg2); }
+    .notif-badge {
+      position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px;
+      border-radius: 99px; background: var(--accent2); color: #fff;
+      font-size: 8px; font-weight: 800; display: flex; align-items: center;
+      justify-content: center; padding: 0 3px; border: 2px solid var(--card);
+    }
+    .notif-panel {
+      position: absolute; top: 48px; right: 0; width: 320px; max-height: 400px;
+      overflow-y: auto; background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow-xl); z-index: 60;
+      display: none;
+    }
+    .notif-panel.open { display: block; animation: kanim .3s ease both; }
+    .notif-item {
+      padding: 12px 16px; border-bottom: 1px solid var(--border);
+      display: flex; gap: 10px; align-items: flex-start; cursor: pointer; transition: all .2s;
+    }
+    .notif-item:hover { background: var(--card2); }
+    .notif-item.unread { background: rgba(232,93,58,.03); }
+    .notif-item.unread::before {
+      content: ''; width: 5px; height: 5px; border-radius: 50%;
+      background: var(--accent); flex-shrink: 0; margin-top: 6px;
+    }
+    .notif-icon {
+      width: 30px; height: 30px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; flex-shrink: 0;
+    }
+    .notif-content { flex: 1; min-width: 0; }
+    .notif-text { font-size: 12px; font-weight: 500; color: var(--fg); line-height: 1.4; }
+    .notif-text strong { font-weight: 700; }
+    .notif-time { font-size: 10px; color: var(--muted); margin-top: 2px; font-weight: 500; }
+    .notif-empty { text-align: center; padding: 30px 16px; color: var(--muted); font-size: 12px; font-weight: 500; }
+    .notif-empty i { font-size: 24px; display: block; margin-bottom: 8px; color: var(--border2); }
 
-    .notif-panel{position:absolute;top:48px;right:0;width:320px;max-height:400px;overflow-y:auto;background:var(--card);border:2px solid var(--border);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.12);z-index:60;display:none;}
-    .notif-panel.open{display:block;animation:kanim .3s ease both;}
-    .notif-item{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start;cursor:pointer;transition:all .2s;}
-    .notif-item:hover{background:var(--card2);}
-    .notif-item.unread{background:rgba(255,107,53,.04);}
-    .notif-item.unread::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:6px;}
-    .notif-icon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
-    .notif-content{flex:1;min-width:0;}
-    .notif-text{font-size:12px;font-weight:600;color:var(--fg);line-height:1.4;}
-    .notif-text strong{font-weight:800;}
-    .notif-time{font-size:10px;color:var(--muted);margin-top:2px;font-weight:600;}
-    .notif-empty{text-align:center;padding:30px 16px;color:var(--muted);font-size:12px;font-weight:600;}
-    .notif-empty i{font-size:28px;display:block;margin-bottom:8px;color:var(--border);}
+    .notif-perm-banner {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 400;
+      padding: 12px 20px; background: var(--fg); color: #fff;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      transform: translateY(-100%); transition: transform .5s cubic-bezier(.22,1,.36,1);
+      font-size: 13px; font-weight: 600;
+    }
+    .notif-perm-banner.show { transform: translateY(0); }
+    .notif-perm-banner button {
+      padding: 7px 16px; border-radius: 10px;
+      border: 1.5px solid rgba(255,255,255,.25); background: rgba(255,255,255,.1);
+      color: #fff; font-weight: 700; font-size: 12px; cursor: pointer;
+      transition: all .3s; backdrop-filter: blur(4px);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .notif-perm-banner button:hover { background: rgba(255,255,255,.2); }
 
-    .notif-perm-banner{position:fixed;top:0;left:0;right:0;z-index:400;padding:12px 16px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;transform:translateY(-100%);transition:transform .5s cubic-bezier(.25,.46,.45,.94);font-size:13px;font-weight:700;}
-    .notif-perm-banner.show{transform:translateY(0);}
-    .notif-perm-banner button{padding:6px 16px;border-radius:99px;border:2px solid rgba(255,255,255,.5);background:rgba(255,255,255,.2);color:#fff;font-weight:800;font-size:12px;cursor:pointer;transition:all .3s;backdrop-filter:blur(4px);font-family:'Nunito',sans-serif;}
-    .notif-perm-banner button:hover{background:rgba(255,255,255,.35);}
+    .video-url-input { display: flex; gap: 8px; align-items: center; }
+    .video-url-input input { flex: 1; }
+    .video-url-input button {
+      padding: 10px 16px; border-radius: 12px; border: none; cursor: pointer;
+      background: var(--blue); color: #fff; font-size: 12px; font-weight: 700;
+      transition: all .3s; white-space: nowrap;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .video-url-input button:hover { opacity: .85; }
+    .video-preview-box {
+      margin-top: 8px; padding: 10px 14px; border-radius: 12px;
+      background: var(--card2); border: 1.5px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .video-preview-box i { color: var(--blue); font-size: 18px; }
+    .video-preview-box .vp-info { flex: 1; min-width: 0; }
+    .video-preview-box .vp-url { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+    .video-preview-box .vp-label { font-size: 10px; color: var(--teal); font-weight: 700; }
+    .video-preview-box button {
+      width: 28px; height: 28px; border-radius: 8px;
+      border: 1.5px solid var(--border); background: var(--card);
+      color: var(--accent2); cursor: pointer; display: flex;
+      align-items: center; justify-content: center; font-size: 10px;
+      transition: all .3s; flex-shrink: 0;
+    }
+    .video-preview-box button:hover { background: var(--accent2); color: #fff; border-color: var(--accent2); }
 
-    .video-url-input{display:flex;gap:8px;align-items:center;}
-    .video-url-input input{flex:1;}
-    .video-url-input button{padding:10px 16px;border-radius:12px;border:none;cursor:pointer;background:var(--blue);color:#fff;font-size:13px;font-weight:700;transition:all .3s;white-space:nowrap;font-family:'Nunito',sans-serif;}
-    .video-url-input button:hover{opacity:.85;}
-    .video-preview-box{margin-top:8px;padding:10px;border-radius:12px;background:var(--card2);border:2px solid var(--border);display:flex;align-items:center;gap:10px;}
-    .video-preview-box i{color:var(--blue);font-size:20px;}
-    .video-preview-box .vp-info{flex:1;min-width:0;}
-    .video-preview-box .vp-url{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;}
-    .video-preview-box .vp-label{font-size:10px;color:var(--glow);font-weight:700;}
-    .video-preview-box button{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:var(--card);color:var(--accent2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .3s;flex-shrink:0;}
-    .video-preview-box button:hover{background:var(--accent2);color:#fff;border-color:var(--accent2);}
+    /* Jadwal upload */
+    .upload-locked-banner {
+      padding: 20px 24px; border-radius: var(--radius);
+      background: var(--card2); border: 1.5px solid var(--border);
+      text-align: center; margin-bottom: 16px; animation: kanim .4s ease both;
+    }
+    .upload-locked-banner .lock-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: rgba(217,119,6,.1); display: flex;
+      align-items: center; justify-content: center; margin: 0 auto 10px;
+      font-size: 18px; color: var(--amber);
+    }
+    .upload-locked-banner h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 800; color: var(--fg); margin-bottom: 4px; }
+    .upload-locked-banner p { font-size: 12px; color: var(--muted); font-weight: 500; line-height: 1.6; }
+    .upload-locked-banner .schedule-table { display: inline-flex; gap: 4px; margin-top: 12px; flex-wrap: wrap; justify-content: center; }
+    .upload-locked-banner .schedule-day {
+      padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 600;
+      border: 1.5px solid var(--border); background: var(--card); color: var(--muted);
+    }
+    .upload-locked-banner .schedule-day.open { background: rgba(13,148,136,.08); border-color: rgba(13,148,136,.25); color: var(--teal); }
+    .upload-locked-banner .schedule-day.closed { background: rgba(192,57,43,.04); border-color: rgba(192,57,43,.15); color: var(--accent2); }
 
-    /* Jadwal Upload */
-    .upload-locked-banner{padding:16px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(230,57,70,.08),rgba(255,107,53,.08));border:2px solid rgba(230,57,70,.2);text-align:center;margin-bottom:16px;animation:kanim .4s ease both;}
-    .upload-locked-banner .lock-icon{width:48px;height:48px;border-radius:50%;background:rgba(230,57,70,.12);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:20px;color:var(--accent2);}
-    .upload-locked-banner h3{font-family:'Baloo 2',cursive;font-size:16px;font-weight:800;color:var(--fg);margin-bottom:4px;}
-    .upload-locked-banner p{font-size:12px;color:var(--muted);font-weight:600;line-height:1.5;}
-    .upload-locked-banner .schedule-table{display:inline-flex;gap:4px;margin-top:12px;flex-wrap:wrap;justify-content:center;}
-    .upload-locked-banner .schedule-day{padding:5px 12px;border-radius:99px;font-size:10px;font-weight:700;border:2px solid var(--border);background:var(--card);color:var(--muted);}
-    .upload-locked-banner .schedule-day.open{background:rgba(46,196,182,.1);border-color:var(--glow);color:var(--glow);}
-    .upload-locked-banner .schedule-day.closed{background:rgba(230,57,70,.06);border-color:rgba(230,57,70,.2);color:var(--accent2);}
-    .schedule-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;margin-left:8px;}
-    .schedule-pill.open{background:rgba(46,196,182,.1);color:var(--glow);border:1px solid rgba(46,196,182,.25);}
-    .schedule-pill.closed{background:rgba(230,57,70,.08);color:var(--accent2);border:1px solid rgba(230,57,70,.2);}
+    .schedule-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 8px; font-size: 10px; font-weight: 600;
+      margin-left: 8px; text-transform: uppercase; letter-spacing: .3px;
+    }
+    .schedule-pill.open { background: rgba(13,148,136,.08); color: var(--teal); border: 1px solid rgba(13,148,136,.15); }
+    .schedule-pill.closed { background: rgba(192,57,43,.06); color: var(--accent2); border: 1px solid rgba(192,57,43,.12); }
 
-    /* Progress upload detail */
-    .upload-progress{width:100%;padding:10px 14px;border-radius:12px;background:var(--card2);border:1.5px solid var(--border);margin-top:8px;}
-    .upload-progress .up-row{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;margin-bottom:4px;}
-    .upload-progress .up-bar{width:100%;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
-    .upload-progress .up-fill{height:100%;border-radius:3px;transition:width .4s;background:linear-gradient(90deg,var(--glow),var(--accent));}
+    .upload-progress {
+      width: 100%; padding: 10px 14px; border-radius: 12px;
+      background: var(--card2); border: 1.5px solid var(--border); margin-top: 8px;
+    }
+    .upload-progress .up-row { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+    .upload-progress .up-bar { width: 100%; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .upload-progress .up-fill { height: 100%; border-radius: 3px; transition: width .4s; background: linear-gradient(90deg, var(--teal), var(--accent)); }
 
-    /* Header shadow saat scroll */
-    .header-scrolled{box-shadow:0 4px 20px rgba(0,0,0,.06) !important;}
+    .header-scrolled { box-shadow: var(--shadow-md) !important; }
 
-    ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;} ::-webkit-scrollbar-thumb:hover{background:var(--glow);}
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
-    @media(max-width:640px){
-      .fab{width:52px;height:52px;font-size:18px;bottom:55px;right:16px;}
-      .fbs{bottom:118px;left:10px;font-size:8px;}
-      .rainbow{width:200px;height:100px;}
-      .sun{width:55px;height:55px;right:30px;top:20px;}
-      .notif-panel{width:calc(100vw - 32px);right:-8px;}
-      .mx{max-width:100%;border-radius:20px 20px 0 0;max-height:95vh;}
-      .mb{padding:0;align-items:flex-end;}
-      .mb .mx{border-radius:20px 20px 0 0;max-height:92vh;}
-      .modal-img-wrap img{max-height:50vh;}
-      .modal-img-zoom-hint{bottom:8px;right:8px;font-size:9px;}
+    /* Kategori colors */
+    .cat-puisi { color: var(--amber); background: rgba(217,119,6,.08); }
+    .cat-cerita { color: var(--blue); background: rgba(37,99,235,.08); }
+    .cat-opini { color: var(--green); background: rgba(22,163,74,.08); }
+    .cat-foto { color: var(--pink); background: rgba(236,72,153,.08); }
+    .cat-quotes { color: var(--accent); background: rgba(232,93,58,.08); }
+    .cat-lainnya { color: var(--purple); background: rgba(124,58,237,.08); }
+
+    /* Stat card di header */
+    .stat-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 600;
+      background: var(--card); border: 1.5px solid var(--border);
+    }
+
+    @media(max-width: 640px) {
+      .fab { width: 50px; height: 50px; font-size: 18px; bottom: 20px; right: 16px; border-radius: 14px; }
+      .fbs { bottom: 82px; left: 10px; font-size: 8px; }
+      .notif-panel { width: calc(100vw - 32px); right: -8px; }
+      .mx { max-width: 100%; border-radius: var(--radius-lg) var(--radius-lg) 0 0; max-height: 95vh; }
+      .mb { padding: 0; align-items: flex-end; }
+      .mb .mx { border-radius: var(--radius-lg) var(--radius-lg) 0 0; max-height: 92vh; }
+      .modal-img-wrap img { max-height: 45vh; }
+      .kimg { height: 180px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Banner izin notifikasi -->
   <div class="notif-perm-banner" id="notifBanner">
-    <span><i class="fa-solid fa-bell mr-2"></i>Aktifkan notifikasi agar tidak ketinggalan karya baru dari teman!</span>
-    <button onclick="requestNotifPermission()"><i class="fa-solid fa-check mr-1"></i>Izinkan</button>
+    <span><i class="fa-solid fa-bell" style="margin-right:8px;"></i>Aktifkan notifikasi agar tidak ketinggalan karya baru!</span>
+    <button onclick="requestNotifPermission()"><i class="fa-solid fa-check" style="margin-right:4px;"></i>Izinkan</button>
   </div>
 
-  <div class="bg-s" id="bgScene">
-    <div class="rainbow"></div>
-    <div class="sun"></div>
-    <div class="cloud c1"></div>
-    <div class="cloud c2"></div>
-    <div class="cloud c3"></div>
+  <div class="bg-ambient">
+    <div class="bg-blob"></div>
+    <div class="bg-blob"></div>
+    <div class="bg-blob"></div>
   </div>
-  <div class="grass"></div>
+  <div class="bg-grid"></div>
+
   <div class="tc" id="toastC"></div>
   <div class="fbs ld" id="fbs"><span class="fd2"></span><span id="fbt">Menghubungkan...</span></div>
 
@@ -336,6 +683,7 @@
 
   <!-- Fullscreen Gambar -->
   <div class="img-fullscreen" id="imgFull" onclick="closeFullImg()">
+    <button class="close-full" onclick="closeFullImg()"><i class="fa-solid fa-xmark"></i></button>
     <img id="imgFullSrc" src="" alt="Lihat penuh">
   </div>
 
@@ -360,66 +708,66 @@
       <div class="p-6 pb-8 max-w-2xl mx-auto" id="panelContent">
         <div class="flex items-center justify-between mb-5">
           <div>
-            <h2 class="ft font-extrabold text-xl" style="color:var(--fg);">Tulis Karyamu</h2>
-            <p class="text-xs mt-0.5" style="color:var(--muted);font-weight:600;">Puisi, cerita, gambar, video — apapun karyamu!</p>
+            <h2 class="font-extrabold text-lg" style="color:var(--fg);">Tulis Karyamu</h2>
+            <p class="text-xs mt-0.5" style="color:var(--muted);font-weight:500;">Puisi, cerita, gambar, video — apapun karyamu</p>
           </div>
-          <button id="closePanelBtn" onclick="clP()" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--card2);color:var(--muted);border:2px solid var(--border);cursor:pointer;font-size:14px;transition:all .3s;"><i class="fa-solid fa-xmark"></i></button>
+          <button id="closePanelBtn" onclick="clP()" style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--card2);color:var(--muted);border:1.5px solid var(--border);cursor:pointer;font-size:14px;transition:all .25s;"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div style="display:flex;flex-direction:column;gap:16px;">
           <div>
-            <label class="text-xs font-bold block mb-1.5" style="color:var(--muted);">Nama Kamu <span style="color:var(--accent2);">*</span></label>
-            <input type="text" id="iN" class="ip" placeholder="Contoh: Anisa - Kelas 4A" maxlength="60">
+            <label class="text-xs font-semibold block mb-1.5" style="color:var(--muted);">Nama Kamu <span style="color:var(--accent2);">*</span></label>
+            <input type="text" id="iN" class="ip" placeholder="Contoh: Anisa — Kelas 4A" maxlength="60">
           </div>
           <div>
-            <label class="text-xs font-bold block mb-2" style="color:var(--muted);">Kategori <span style="color:var(--accent2);">*</span></label>
+            <label class="text-xs font-semibold block mb-2" style="color:var(--muted);">Kategori <span style="color:var(--accent2);">*</span></label>
             <div class="flex flex-wrap gap-2" id="cC">
-              <button class="ch" data-c="puisi" onclick="pC(this)"><i class="fa-solid fa-feather mr-1" style="font-size:10px;"></i>Puisi</button>
-              <button class="ch" data-c="cerita" onclick="pC(this)"><i class="fa-solid fa-book-open mr-1" style="font-size:10px;"></i>Cerita</button>
-              <button class="ch" data-c="opini" onclick="pC(this)"><i class="fa-solid fa-comment-dots mr-1" style="font-size:10px;"></i>Opini</button>
-              <button class="ch" data-c="quotes" onclick="pC(this)"><i class="fa-solid fa-quote-left mr-1" style="font-size:10px;"></i>Quotes</button>
-              <button class="ch" data-c="foto" onclick="pC(this)"><i class="fa-solid fa-camera mr-1" style="font-size:10px;"></i>Foto</button>
-              <button class="ch" data-c="lainnya" onclick="pC(this)"><i class="fa-solid fa-star mr-1" style="font-size:10px;"></i>Lainnya</button>
+              <button class="ch" data-c="puisi" onclick="pC(this)"><i class="fa-solid fa-feather" style="font-size:10px;margin-right:4px;"></i>Puisi</button>
+              <button class="ch" data-c="cerita" onclick="pC(this)"><i class="fa-solid fa-book-open" style="font-size:10px;margin-right:4px;"></i>Cerita</button>
+              <button class="ch" data-c="opini" onclick="pC(this)"><i class="fa-solid fa-comment-dots" style="font-size:10px;margin-right:4px;"></i>Opini</button>
+              <button class="ch" data-c="quotes" onclick="pC(this)"><i class="fa-solid fa-quote-left" style="font-size:10px;margin-right:4px;"></i>Quotes</button>
+              <button class="ch" data-c="foto" onclick="pC(this)"><i class="fa-solid fa-camera" style="font-size:10px;margin-right:4px;"></i>Foto</button>
+              <button class="ch" data-c="lainnya" onclick="pC(this)"><i class="fa-solid fa-star" style="font-size:10px;margin-right:4px;"></i>Lainnya</button>
             </div>
           </div>
           <div>
-            <label class="text-xs font-bold block mb-1.5" style="color:var(--muted);">Judul <span style="color:var(--border);">(opsional)</span></label>
+            <label class="text-xs font-semibold block mb-1.5" style="color:var(--muted);">Judul <span style="color:var(--border2);">(opsional)</span></label>
             <input type="text" id="iJ" class="ip" placeholder="Beri judul karyamu" maxlength="100">
           </div>
           <div>
-            <label class="text-xs font-bold block mb-1.5" style="color:var(--muted);">Isi Karya <span style="color:var(--accent2);">*</span></label>
+            <label class="text-xs font-semibold block mb-1.5" style="color:var(--muted);">Isi Karya <span style="color:var(--accent2);">*</span></label>
             <textarea id="iI" class="ip" placeholder="Tulis karyamu di sini..."></textarea>
           </div>
           <div>
-            <label class="text-xs font-bold block mb-1.5" style="color:var(--muted);">Gambar <span style="color:var(--border);">(opsional, max 10MB — otomatis dikompres)</span></label>
+            <label class="text-xs font-semibold block mb-1.5" style="color:var(--muted);">Gambar <span style="color:var(--border2);">(opsional, max 10MB)</span></label>
             <div class="uz" id="uZ" onclick="document.getElementById('fI').click()">
-              <div id="uP"><i class="fa-solid fa-image text-2xl mb-2" style="color:var(--border);"></i><p class="text-xs" style="color:var(--muted);font-weight:600;">Klik atau seret gambar ke sini</p><p class="text-[10px] mt-1" style="color:var(--border);font-weight:600;">JPG, PNG, WebP — max 10MB</p></div>
+              <div id="uP"><i class="fa-solid fa-cloud-arrow-up text-2xl mb-2" style="color:var(--border2);"></i><p class="text-xs" style="color:var(--muted);font-weight:500;">Klik atau seret gambar ke sini</p><p class="text-[10px] mt-1" style="color:var(--border2);font-weight:500;">JPG, PNG, WebP — max 10MB</p></div>
               <div id="uV" style="display:none;"></div>
             </div>
             <div class="compress-bar" id="compressBar"><div class="fill" id="compressFill"></div></div>
             <div class="upload-progress" id="uploadProgress" style="display:none;">
-              <div class="up-row"><i class="fa-solid fa-arrows-rotate" style="color:var(--accent);font-size:10px;"></i><span id="upText" style="color:var(--muted);">Mempersiapkan...</span><span id="upPct" style="margin-left:auto;color:var(--glow);">0%</span></div>
+              <div class="up-row"><i class="fa-solid fa-arrows-rotate" style="color:var(--accent);font-size:10px;"></i><span id="upText" style="color:var(--muted);">Mempersiapkan...</span><span id="upPct" style="margin-left:auto;color:var(--teal);">0%</span></div>
               <div class="up-bar"><div class="up-fill" id="upFill" style="width:0%;"></div></div>
             </div>
             <input type="file" id="fI" accept="image/*" style="display:none;" onchange="hF(this)">
           </div>
           <div>
-            <label class="text-xs font-bold block mb-1.5" style="color:var(--muted);">URL Video <span style="color:var(--border);">(opsional — YouTube / TikTok / dll)</span></label>
+            <label class="text-xs font-semibold block mb-1.5" style="color:var(--muted);">URL Video <span style="color:var(--border2);">(opsional)</span></label>
             <div class="video-url-input">
               <input type="url" id="iVU" class="ip" placeholder="https://youtube.com/watch?v=..." oninput="previewVideoUrl()">
-              <button type="button" onclick="embedVideoFromUrl()"><i class="fa-solid fa-check mr-1"></i>Validasi</button>
+              <button type="button" onclick="embedVideoFromUrl()">Validasi</button>
             </div>
             <div id="videoPreviewBox" style="display:none;" class="video-preview-box">
               <i class="fa-solid fa-circle-play"></i>
               <div class="vp-info">
-                <div class="vp-label"><i class="fa-solid fa-check-circle mr-1"></i>Video siap disematkan</div>
+                <div class="vp-label"><i class="fa-solid fa-check-circle" style="margin-right:4px;"></i>Video siap disematkan</div>
                 <div class="vp-url" id="videoPreviewUrl"></div>
               </div>
               <button onclick="clearVideoUrl()" title="Hapus video"><i class="fa-solid fa-xmark"></i></button>
             </div>
           </div>
-          <div class="p-3 rounded-xl flex items-start gap-3" style="background:rgba(46,196,182,.08);border:2px solid rgba(46,196,182,.2);">
-            <i class="fa-solid fa-cloud-arrow-up mt-0.5" style="color:var(--glow);font-size:14px;"></i>
-            <p class="text-xs leading-relaxed" style="color:var(--muted);font-weight:600;">Gambar otomatis dikompres & tersimpan di <strong style="color:var(--glow);">Google Drive</strong> sebagai arsip permanen. Video hanya menyimpan URL-nya. Karya tampil <strong style="color:var(--accent);">7 hari</strong> di mading.</p>
+          <div class="p-3 rounded-xl flex items-start gap-3" style="background:rgba(13,148,136,.05);border:1.5px solid rgba(13,148,136,.12);">
+            <i class="fa-solid fa-circle-info mt-0.5" style="color:var(--teal);font-size:13px;"></i>
+            <p class="text-xs leading-relaxed" style="color:var(--muted);font-weight:500;">Gambar otomatis dikompres dan tersimpan di <strong style="color:var(--teal);">Google Drive</strong>. Karya tampil <strong style="color:var(--accent);">7 hari</strong> di mading.</p>
           </div>
           <button class="bs w-full" id="bS" onclick="subK()">
             <i class="fa-solid fa-paper-plane" id="bSI"></i>
@@ -431,25 +779,25 @@
   </div>
 
   <div class="relative z-10">
-    <header class="py-4 px-4 border-b-2" id="mainHeader" style="border-color:var(--border);background:rgba(253,246,236,.92);backdrop-filter:blur(12px);position:sticky;top:0;z-index:50;transition:box-shadow .3s;">
+    <header class="py-3 px-4" id="mainHeader" style="border-bottom:1px solid var(--border);background:rgba(248,246,243,.88);backdrop-filter:blur(16px);position:sticky;top:0;z-index:50;transition:box-shadow .3s;">
       <div class="max-w-6xl mx-auto flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-lg" style="background:linear-gradient(135deg,var(--accent),var(--pink));color:#fff;box-shadow:0 3px 12px rgba(255,107,53,.25);"><i class="fa-solid fa-school"></i></div>
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center text-base" style="background:var(--fg);color:#fff;box-shadow:0 2px 10px rgba(26,26,46,.2);"><i class="fa-solid fa-school"></i></div>
           <div>
-            <h1 class="ft font-extrabold text-base leading-tight" style="color:var(--fg);">MADING DIGITAL</h1>
-            <p class="text-[10px] font-bold" style="color:var(--muted);">SD Negeri Majalengka Wetan VIII</p>
+            <h1 class="font-extrabold text-sm leading-tight tracking-tight" style="color:var(--fg);">MADING DIGITAL</h1>
+            <p class="text-[10px] font-medium" style="color:var(--muted);">SD Negeri Majalengka Wetan VIII</p>
           </div>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2.5">
           <div style="position:relative;" id="notifWrap">
             <div class="notif-bell" id="notifBell" onclick="toggleNotifPanel()">
               <i class="fa-solid fa-bell"></i>
               <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
             </div>
             <div class="notif-panel" id="notifPanel">
-              <div style="padding:12px 16px;border-bottom:2px solid var(--border);display:flex;align-items:center;">
-                <span class="ft font-extrabold text-sm" style="flex:1;color:var(--fg);">Notifikasi</span>
-                <button onclick="markAllRead()" style="font-size:10px;color:var(--blue);font-weight:700;background:none;border:none;cursor:pointer;font-family:'Nunito',sans-serif;">Tandai semua dibaca</button>
+              <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;">
+                <span class="font-extrabold text-sm" style="flex:1;color:var(--fg);">Notifikasi</span>
+                <button onclick="markAllRead()" style="font-size:10px;color:var(--blue);font-weight:600;background:none;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">Tandai dibaca</button>
               </div>
               <div id="notifList">
                 <div class="notif-empty"><i class="fa-solid fa-bell-slash"></i>Belum ada notifikasi</div>
@@ -457,27 +805,28 @@
             </div>
           </div>
           <div class="text-right hidden sm:block">
-            <div class="text-xs font-bold" style="color:var(--fg);" id="dS"></div>
-            <div class="text-[10px] font-bold" style="color:var(--muted);" id="dD"></div>
+            <div class="text-xs font-semibold" style="color:var(--fg);" id="dS"></div>
+            <div class="text-[10px] font-medium" style="color:var(--muted);" id="dD"></div>
           </div>
-          <div class="flex items-baseline gap-0.5 px-3 py-1.5 rounded-xl" style="background:var(--card);border:2px solid var(--border);">
-            <span class="text-lg font-extrabold" style="color:var(--accent);font-variant-numeric:tabular-nums;" id="cH">00</span>
-            <span class="text-xs font-bold" style="color:var(--muted);">:</span>
-            <span class="text-lg font-extrabold" style="color:var(--accent);font-variant-numeric:tabular-nums;" id="cM">00</span>
+          <div class="flex items-baseline gap-0.5 px-3 py-1.5 rounded-xl" style="background:var(--card);border:1.5px solid var(--border);">
+            <span class="text-base font-extrabold" style="color:var(--fg);font-variant-numeric:tabular-nums;" id="cH">00</span>
+            <span class="text-[10px] font-medium" style="color:var(--muted);">:</span>
+            <span class="text-base font-extrabold" style="color:var(--fg);font-variant-numeric:tabular-nums;" id="cM">00</span>
           </div>
         </div>
       </div>
     </header>
 
-    <div class="py-3 px-4 border-b" style="border-color:var(--border);background:rgba(255,255,255,.85);backdrop-filter:blur(8px);">
+    <!-- Toolbar filter -->
+    <div class="py-2.5 px-4" style="border-bottom:1px solid var(--border);background:rgba(255,255,255,.8);backdrop-filter:blur(12px);">
       <div class="max-w-6xl mx-auto flex items-center justify-between flex-wrap gap-2">
-        <div class="flex items-center gap-3">
-          <span class="text-xs font-bold" style="color:var(--muted);"><i class="fa-solid fa-layer-group mr-1" style="color:var(--glow);"></i> <strong id="tK" style="color:var(--fg);">0</strong> karya</span>
-          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="color:var(--accent);background:rgba(255,107,53,.08);"><i class="fa-solid fa-hourglass-half mr-0.5"></i> 7 hari</span>
-          <span class="archive-badge hidden sm:inline-flex"><i class="fa-solid fa-cloud-arrow-up" style="font-size:8px;"></i> Arsip ke Drive</span>
+        <div class="flex items-center gap-2">
+          <span class="stat-chip"><i class="fa-solid fa-layer-group" style="color:var(--teal);font-size:10px;"></i><strong id="tK" style="color:var(--fg);">0</strong></span>
+          <span class="stat-chip" style="font-size:10px;color:var(--accent);"><i class="fa-solid fa-hourglass-half" style="font-size:9px;"></i> 7 hari</span>
+          <span class="archive-badge hidden sm:inline-flex"><i class="fa-solid fa-cloud-arrow-up" style="font-size:8px;"></i> Drive</span>
           <span id="schedulePill" class="schedule-pill"></span>
         </div>
-        <div class="flex gap-1.5 overflow-x-auto" id="fC">
+        <div class="flex gap-1.5 overflow-x-auto" id="fC" style="-webkit-overflow-scrolling:touch;">
           <button class="ch s" data-f="semua" onclick="sF(this)" style="padding:5px 12px;font-size:11px;">Semua</button>
           <button class="ch" data-f="puisi" onclick="sF(this)" style="padding:5px 12px;font-size:11px;">Puisi</button>
           <button class="ch" data-f="cerita" onclick="sF(this)" style="padding:5px 12px;font-size:11px;">Cerita</button>
@@ -488,12 +837,12 @@
       </div>
     </div>
 
-    <main class="max-w-6xl mx-auto px-4 py-6 pb-20">
+    <main class="max-w-6xl mx-auto px-4 py-6 pb-24">
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="kG"></div>
       <div class="em" id="eS" style="display:none;">
-        <div style="font-size:52px;margin-bottom:16px;">🎨</div>
-        <p class="ft font-extrabold text-lg mb-1" style="color:var(--fg);">Belum ada karya</p>
-        <p class="text-sm mb-5" style="color:var(--muted);font-weight:600;">Yuk jadi yang pertama nulis di mading!</p>
+        <div style="width:64px;height:64px;border-radius:20px;background:var(--bg2);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px;color:var(--border2);"><i class="fa-solid fa-pen-nib"></i></div>
+        <p class="font-extrabold text-lg mb-1" style="color:var(--fg);">Belum ada karya</p>
+        <p class="text-sm mb-5" style="color:var(--muted);font-weight:500;">Yuk jadi yang pertama nulis di mading!</p>
         <button onclick="opP()" class="bs" style="display:inline-flex;padding:10px 24px;font-size:13px;"><i class="fa-solid fa-pencil"></i> Tulis Karya Pertama</button>
       </div>
     </main>
@@ -526,6 +875,19 @@ var openCommentId = null;
 var notifications = [];
 var notifPanelOpen = false;
 
+/* Warna per kategori */
+var CAT_COLORS = {
+  puisi:   { bg: 'rgba(217,119,6,.08)',  color: '#d97706', icon: 'fa-feather' },
+  cerita:  { bg: 'rgba(37,99,235,.08)',   color: '#2563eb', icon: 'fa-book-open' },
+  opini:   { bg: 'rgba(22,163,74,.08)',   color: '#16a34a', icon: 'fa-comment-dots' },
+  foto:    { bg: 'rgba(236,72,153,.08)',  color: '#ec4899', icon: 'fa-camera' },
+  quotes:  { bg: 'rgba(232,93,58,.08)',   color: '#e85d3a', icon: 'fa-quote-left' },
+  lainnya: { bg: 'rgba(124,58,237,.08)',  color: '#7c3aed', icon: 'fa-star' }
+};
+
+/* Warna avatar */
+var AVATAR_COLORS = ['#e85d3a','#2563eb','#16a34a','#d97706','#7c3aed','#ec4899','#0d9488','#c0392b'];
+
 /* Muat state lokal */
 try {
   var sv = localStorage.getItem('mading_likes');
@@ -533,43 +895,38 @@ try {
   var sn = localStorage.getItem('mading_notifs');
   if (sn) notifications = JSON.parse(sn);
 } catch(e) {}
-
 function saveLikes() { try { localStorage.setItem('mading_likes', JSON.stringify(likedItems)); } catch(e) {} }
 function saveNotifs() { try { localStorage.setItem('mading_notifs', JSON.stringify(notifications)); } catch(e) {} }
 
 /* ==============================================
    JADWAL UPLOAD
    ============================================== */
-var HARI_NAMA = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+var HARI_NAMA = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 var UPLOAD_OPEN_DAYS = [5, 6, 0];
-
 function isUploadOpen() { return UPLOAD_OPEN_DAYS.indexOf(new Date().getDay()) !== -1; }
-
 function getUploadStatusText() {
-  if (isUploadOpen()) return { label: 'Buka', icon: 'fa-lock-open', cls: 'open' };
+  if (isUploadOpen()) return { label:'Buka', icon:'fa-lock-open', cls:'open' };
   var day = new Date().getDay(), d = day === 0 ? 5 : 5 - day;
   if (d <= 0) d = 5;
-  return { label: 'Kunci · Buka ' + d + ' hari lagi', icon: 'fa-lock', cls: 'closed' };
+  return { label:'Kunci · '+d+' hari lagi', icon:'fa-lock', cls:'closed' };
 }
-
 function updateUploadSchedule() {
   var open = isUploadOpen(), status = getUploadStatusText();
   var fab = document.getElementById('fabB'), pill = document.getElementById('schedulePill'), lockBanner = document.getElementById('uploadLockBanner');
   pill.className = 'schedule-pill ' + status.cls;
-  pill.innerHTML = '<i class="fa-solid ' + status.icon + '" style="font-size:8px;"></i> Upload ' + status.label;
+  pill.innerHTML = '<i class="fa-solid '+status.icon+'" style="font-size:8px;"></i> Upload '+status.label;
   if (open) { fab.classList.remove('locked'); lockBanner.style.display = 'none'; }
   else {
     fab.classList.add('locked');
     var t = '';
     HARI_NAMA.forEach(function(n, i) {
       var o = UPLOAD_OPEN_DAYS.indexOf(i) !== -1;
-      t += '<span class="schedule-day ' + (o ? 'open' : 'closed') + '">' + (o ? '<i class="fa-solid fa-check" style="font-size:8px;margin-right:2px;"></i>' : '<i class="fa-solid fa-xmark" style="font-size:8px;margin-right:2px;"></i>') + n + '</span>';
+      t += '<span class="schedule-day '+(o?'open':'closed')+'">'+(o?'<i class="fa-solid fa-check" style="font-size:7px;margin-right:2px;"></i>':'<i class="fa-solid fa-xmark" style="font-size:7px;margin-right:2px;"></i>')+n+'</span>';
     });
     lockBanner.style.display = 'block';
-    lockBanner.innerHTML = '<div class="upload-locked-banner"><div class="lock-icon"><i class="fa-solid fa-lock"></i></div><h3>Upload Sedang Ditutup</h3><p>Kamu bisa mengirim karya hanya pada <strong style="color:var(--glow);">Jumat, Sabtu, dan Minggu</strong>.<br>Sabar ya, tunggu jadwal berikutnya!</p><div class="schedule-table">' + t + '</div></div>';
+    lockBanner.innerHTML = '<div class="upload-locked-banner"><div class="lock-icon"><i class="fa-solid fa-lock"></i></div><h3>Upload Sedang Ditutup</h3><p>Kamu bisa mengirim karya hanya pada <strong style="color:var(--teal);">Jumat, Sabtu, dan Minggu</strong>.</p><div class="schedule-table">'+t+'</div></div>';
   }
 }
-
 function disablePanelInputs(disabled) {
   var p = document.getElementById('panelContent'); if (!p) return;
   p.querySelectorAll('.ip, .ch, .uz, .bs, .video-url-input button').forEach(function(el) {
@@ -591,10 +948,14 @@ function isValidImageUrl(url) {
   return t.indexOf('https://') === 0 && t.length > 15;
 }
 
+/* Render gambar kartu — lebih besar & jelas */
 function renderImage(url, alt, cssClass, index) {
-  if (!isValidImageUrl(url)) return '<div class="' + cssClass + '" onclick="opR(' + index + ')"><i class="fa-solid fa-image"></i><span>Gambar tidak tersedia</span></div>';
-  var iid = 'img_' + index + '_' + Date.now(), fid = 'fb_' + index + '_' + Date.now();
-  return '<div style="position:relative;"><img id="' + iid + '" src="' + url + '" alt="' + (alt || 'Gambar') + '" class="' + cssClass + '" onclick="opR(' + index + ')" loading="lazy" style="display:block;" onerror="handleImgError(\'' + iid + '\',\'' + fid + '\')"><div id="' + fid + '" class="img-placeholder" style="display:none;" onclick="opR(' + index + ')"><i class="fa-solid fa-image"></i><span>Gambar gagal dimuat</span></div></div>';
+  if (!isValidImageUrl(url)) return '<div class="img-placeholder" onclick="opR('+index+')"><i class="fa-solid fa-image"></i><span>Gambar tidak tersedia</span></div>';
+  var iid = 'img_'+index+'_'+Date.now(), fid = 'fb_'+index+'_'+Date.now();
+  return '<div class="kimg-wrap" onclick="opR('+index+')">'+
+    '<img id="'+iid+'" src="'+url+'" alt="'+(alt||'Gambar')+'" class="kimg" loading="lazy" onerror="handleImgError(\''+iid+'\',\''+fid+'\')">'+
+    '<div class="kimg-zoom-icon"><i class="fa-solid fa-expand"></i></div>'+
+    '<div id="'+fid+'" class="img-placeholder" style="display:none;position:absolute;inset:0;"><i class="fa-solid fa-image"></i><span>Gambar gagal dimuat</span></div></div>';
 }
 
 function handleImgError(iid, fid) {
@@ -613,14 +974,14 @@ function handleImgError(iid, fid) {
   } else { if (fb) fb.style.display = 'flex'; }
 }
 
-/* Render gambar di modal — BESAR, tidak kepotong */
+/* Render gambar modal — besar, jelas, dengan background */
 function renderModalImage(url, alt) {
   if (!isValidImageUrl(url)) return '<div class="img-placeholder-modal"><i class="fa-solid fa-image"></i><span>Gambar tidak tersedia</span></div>';
-  var mid = 'mi_' + Date.now(), mfb = 'mf_' + Date.now();
-  return '<div class="modal-img-wrap" id="modalImgWrap">' +
-    '<img id="' + mid + '" src="' + url + '" alt="' + (alt || 'Gambar') + '" onclick="openFullImg(this.src)" onerror="handleModalImgErr(\'' + mid + '\',\'' + mfb + '\')">' +
-    '<div class="modal-img-zoom-hint" id="zoomHint"><i class="fa-solid fa-magnifying-glass-plus"></i> Klik untuk perbesar</div>' +
-    '<div id="' + mfb + '" class="img-placeholder-modal" style="display:none;position:absolute;inset:0;"><i class="fa-solid fa-image"></i><span>Gambar gagal dimuat</span></div></div>';
+  var mid = 'mi_'+Date.now(), mfb = 'mf_'+Date.now();
+  return '<div class="modal-img-wrap" id="modalImgWrap">'+
+    '<img id="'+mid+'" src="'+url+'" alt="'+(alt||'Gambar')+'" onclick="openFullImg(this.src)" onerror="handleModalImgErr(\''+mid+'\',\''+mfb+'\')">'+
+    '<div class="modal-img-hint"><i class="fa-solid fa-magnifying-glass-plus"></i> Klik untuk perbesar</div>'+
+    '<div id="'+mfb+'" class="img-placeholder-modal" style="display:none;position:absolute;inset:0;"><i class="fa-solid fa-image"></i><span>Gambar gagal dimuat</span></div></div>';
 }
 
 function handleModalImgErr(iid, fid) {
@@ -639,12 +1000,10 @@ function handleModalImgErr(iid, fid) {
   } else { if (fb) fb.style.display = 'flex'; }
 }
 
-/* Fullscreen gambar */
 function openFullImg(src) {
   if (!src) return;
-  var el = document.getElementById('imgFull');
   document.getElementById('imgFullSrc').src = src;
-  el.classList.add('open');
+  document.getElementById('imgFull').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 function closeFullImg() {
@@ -658,939 +1017,765 @@ function closeFullImg() {
 function extractVideoEmbed(url) {
   if (!url) return '';
   url = url.trim();
-  var ym = url.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  var ym = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
   if (ym) return 'https://www.youtube.com/embed/' + ym[1];
-  if (url.indexOf('tiktok.com') !== -1) { var tm = url.match(/video\/(\d+)/); if (tm) return 'https://www.tiktok.com/embed/v2/' + tm[1]; return ''; }
-  if (url.indexOf('instagram.com') !== -1) { var im = url.match(/\/reel\/([a-zA-Z0-9_-]+)/); if (im) return 'https://www.instagram.com/reel/' + im[1] + '/embed/'; }
-  var vm = url.match(/(?:https?:\/\/)?(?:www\.)?vimeo\.com\/(\d+)/);
-  if (vm) return 'https://player.vimeo.com/video/' + vm[1];
-  if (url.indexOf('/embed/') !== -1) return url;
+  var tt = url.match(/tiktok\.com\/@[^\/]+\/video\/(\d+)/);
+  if (tt) return 'https://www.tiktok.com/embed/v2/' + tt[1];
+  var im = url.match(/instagram\.com\/(?:p|reel)\/([a-zA-Z0-9_-]+)/);
+  if (im) return 'https://www.instagram.com/p/' + im[1] + '/embed/';
   return '';
 }
 
-function getVideoPlatform(url) {
-  if (!url) return '';
-  if (url.indexOf('youtube.com') !== -1 || url.indexOf('youtu.be') !== -1) return 'YouTube';
-  if (url.indexOf('tiktok.com') !== -1) return 'TikTok';
-  if (url.indexOf('instagram.com') !== -1) return 'Instagram';
-  if (url.indexOf('vimeo.com') !== -1) return 'Vimeo';
-  return 'Video';
-}
-
-function previewVideoUrl() {}
-
-function embedVideoFromUrl() {
+function previewVideoUrl() {
   var url = document.getElementById('iVU').value.trim();
-  if (!url) { tst('Masukkan URL video terlebih dahulu', 'er'); return; }
-  var embed = extractVideoEmbed(url);
-  if (!embed) { tst('URL video tidak dikenali. Coba link YouTube, TikTok, atau Vimeo.', 'er'); return; }
-  sVideoUrl = url; sVideoEmbed = embed;
-  document.getElementById('videoPreviewUrl').textContent = url;
-  document.getElementById('videoPreviewBox').style.display = 'flex';
-  tst('Video ' + getVideoPlatform(url) + ' siap disematkan!', 'ok');
+  var box = document.getElementById('videoPreviewBox');
+  if (url.length > 10) {
+    var embed = extractVideoEmbed(url);
+    if (embed) {
+      document.getElementById('videoPreviewUrl').textContent = url;
+      box.style.display = 'flex';
+      sVideoEmbed = embed;
+      sVideoUrl = url;
+      return;
+    }
+  }
+  box.style.display = 'none';
+  sVideoEmbed = '';
+  sVideoUrl = '';
 }
 
+function embedVideoFromUrl() { previewVideoUrl(); }
 function clearVideoUrl() {
-  sVideoUrl = ''; sVideoEmbed = '';
   document.getElementById('iVU').value = '';
   document.getElementById('videoPreviewBox').style.display = 'none';
+  sVideoEmbed = ''; sVideoUrl = '';
 }
 
-function renderVideoCard(embedUrl, platform) {
-  if (!embedUrl) return '';
-  var yid = embedUrl.match(/embed\/([a-zA-Z0-9_-]+)/);
-  var thumb = yid ? 'https://img.youtube.com/vi/' + yid[1] + '/hqdefault.jpg' : '';
-  var pc = platform === 'YouTube' ? '#ff0000' : platform === 'TikTok' ? '#000' : platform === 'Instagram' ? '#e1306c' : 'var(--blue)';
-  if (thumb) {
-    return '<div class="video-thumb" onclick="playCardVideo(this, \'' + embedUrl.replace(/'/g, "\\'") + '\')"><img src="' + thumb + '" alt="Video" loading="lazy"><div class="video-play"><span><i class="fa-solid fa-play" style="margin-left:2px;"></i></span></div><span class="video-duration" style="background:' + pc + ';">' + platform + '</span></div>';
-  }
-  return '<div style="padding:10px;border-radius:12px;background:var(--card2);border:1.5px solid var(--border);display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:8px;" onclick="playCardVideo(this, \'' + embedUrl.replace(/'/g, "\\'") + '\')"><i class="fa-solid fa-circle-play" style="color:' + pc + ';font-size:20px;"></i><span style="font-size:11px;font-weight:700;color:var(--muted);">Tonton video ' + platform + '</span></div>';
-}
-
-function playCardVideo(el, embedUrl) {
-  var d = document.createElement('div'); d.className = 'video-embed';
-  d.innerHTML = '<iframe src="' + embedUrl + '?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe>';
-  el.parentNode.replaceChild(d, el);
-}
-
-/* ==============================================
-   NOTIFIKASI PUSH
-   ============================================== */
-function initMessaging() {
-  try {
-    messaging = firebase.messaging();
-    if (Notification.permission === 'granted') { getAndSaveToken(); }
-    else if (Notification.permission === 'default') {
-      setTimeout(function() { if (Notification.permission === 'default') { document.getElementById('notifBanner').classList.add('show'); setTimeout(function() { document.getElementById('notifBanner').classList.remove('show'); }, 15000); } }, 3000);
-    }
-    messaging.onMessage(function(payload) {
-      var data = payload.data || {};
-      addNotification('new_karya', data.body || 'Ada karya baru!', data.karyaId);
-      tst(data.body || 'Ada karya baru!', 'ok');
-    });
-  } catch(e) { console.warn('Messaging tidak tersedia:', e); }
-}
-
-async function requestNotifPermission() {
-  document.getElementById('notifBanner').classList.remove('show');
-  try {
-    if (!messaging) { tst('Fitur notifikasi belum tersedia', 'er'); return; }
-    var p = await Notification.requestPermission();
-    if (p === 'granted') { await getAndSaveToken(); tst('Notifikasi aktif!', 'ok'); }
-    else { tst('Izin notifikasi ditolak.', 'er'); }
-  } catch(e) { tst('Gagal mengaktifkan notifikasi', 'er'); }
-}
-
-async function getAndSaveToken() {
-  try {
-    var token = await messaging.getToken({ vapidKey: VAPID_KEY });
-    if (db) db.ref('fcm_tokens/' + token.replace(/[^a-zA-Z0-9]/g, '_')).set({ token: token, updatedAt: Date.now() });
-  } catch(e) { console.warn('Gagal FCM token:', e); }
-}
-
-/* ==============================================
-   NOTIFIKASI IN-APP
-   ============================================== */
-function addNotification(type, text, karyaId) {
-  notifications.unshift({ id: 'n_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), type: type, text: text, karyaId: karyaId || '', time: Date.now(), read: false });
-  if (notifications.length > 50) notifications = notifications.slice(0, 50);
-  saveNotifs(); updateNotifBadge(); renderNotifList();
-}
-
-function updateNotifBadge() {
-  var u = notifications.filter(function(n) { return !n.read; }).length;
-  var b = document.getElementById('notifBadge');
-  if (u > 0) { b.style.display = 'flex'; b.textContent = u > 99 ? '99+' : u; } else { b.style.display = 'none'; }
-}
-
-function renderNotifList() {
-  var l = document.getElementById('notifList');
-  if (!notifications.length) { l.innerHTML = '<div class="notif-empty"><i class="fa-solid fa-bell-slash"></i>Belum ada notifikasi</div>'; return; }
-  var h = '';
-  notifications.slice(0, 20).forEach(function(n) {
-    var ib, ic, icol;
-    switch(n.type) {
-      case 'new_karya': ib='rgba(255,107,53,.12)'; ic='fa-solid fa-pen-fancy'; icol='var(--accent)'; break;
-      case 'like': ib='rgba(230,57,70,.12)'; ic='fa-solid fa-heart'; icol='var(--accent2)'; break;
-      case 'comment': ib='rgba(17,138,178,.12)'; ic='fa-solid fa-comment'; icol='var(--blue)'; break;
-      default: ib='rgba(46,196,182,.12)'; ic='fa-solid fa-bell'; icol='var(--glow)';
-    }
-    h += '<div class="notif-item ' + (n.read ? '' : 'unread') + '" onclick="clickNotif(\'' + n.id + '\',\'' + (n.karyaId || '') + '\')"><div class="notif-icon" style="background:' + ib + ';color:' + icol + ';"><i class="' + ic + '"></i></div><div class="notif-content"><div class="notif-text">' + n.text + '</div><div class="notif-time">' + tAgo(n.time) + '</div></div></div>';
-  });
-  l.innerHTML = h;
-}
-
-function toggleNotifPanel() {
-  notifPanelOpen = !notifPanelOpen;
-  document.getElementById('notifPanel').classList.toggle('open', notifPanelOpen);
-}
-
-function markAllRead() {
-  notifications.forEach(function(n) { n.read = true; });
-  saveNotifs(); updateNotifBadge(); renderNotifList();
-}
-
-function clickNotif(nid, kid) {
-  var n = notifications.find(function(x) { return x.id === nid; });
-  if (n) n.read = true;
-  saveNotifs(); updateNotifBadge(); renderNotifList();
-  notifPanelOpen = false; document.getElementById('notifPanel').classList.remove('open');
-  if (kid) { var i = KL.findIndex(function(k) { return k.id === kid; }); if (i !== -1) opR(i); }
-}
-
-document.addEventListener('click', function(e) {
-  var w = document.getElementById('notifWrap');
-  if (notifPanelOpen && w && !w.contains(e.target)) { notifPanelOpen = false; document.getElementById('notifPanel').classList.remove('open'); }
-});
-
-/* ==============================================
-   FIREBASE INIT
-   ============================================== */
-try {
-  firebase.initializeApp(fc);
-  db = firebase.database();
-
-  db.ref('.info/connected').on('value', function(s) {
-    fbOk = s.val() === true;
-    sFS(fbOk ? 'on' : 'of', fbOk ? 'Terhubung' : 'Offline — cek koneksi');
-    if (fbOk) { tst('Firebase terhubung!', 'ok'); initMessaging(); }
-  });
-
-  db.ref('karya').orderByChild('timestamp').on('value', function(snap) {
-    var d = snap.val(), nk = [];
-    if (d) {
-      Object.keys(d).forEach(function(k) {
-        var v = d[k];
-        if (Date.now() - v.timestamp < 7 * 24 * 60 * 60 * 1000) nk.push({ id: k, ...v });
-        else db.ref('karya/' + k).remove().catch(function() {});
-      });
-    }
-    nk.sort(function(a, b) { return b.timestamp - a.timestamp; });
-    if (KL.length > 0 && nk.length > 0) {
-      var oi = KL.map(function(k) { return k.id; });
-      nk.forEach(function(nk2) {
-        if (oi.indexOf(nk2.id) === -1) {
-          var t = '<strong>' + escHtml(nk2.nama) + '</strong> menulis karya baru';
-          if (nk2.kategori) t += ' di kategori ' + (cL[nk2.kategori] || nk2.kategori);
-          if (nk2.judul) t += ': "' + escHtml(nk2.judul) + '"';
-          addNotification('new_karya', t, nk2.id);
-        }
-      });
-    }
-    KL = nk; rK();
-  });
-
-  db.ref('likes').on('value', function(snap) {
-    var ld = snap.val() || {};
-    document.querySelectorAll('.like-count-display').forEach(function(el) {
-      var kid = el.getAttribute('data-kid');
-      el.textContent = (kid && ld[kid]) ? Object.keys(ld[kid]).length : '0';
-    });
-  });
-
-  db.ref('comments').on('value', function(snap) {
-    if (openCommentId) {
-      var cd = snap.val() || {}, kc = cd[openCommentId] || {};
-      var cl = document.getElementById('modalCommentList');
-      if (cl) renderModalComments(cl, kc, openCommentId);
-    }
-  });
-} catch (e) {
-  console.warn('Firebase init error:', e);
-  sFS('of', 'Firebase tidak tersedia');
-}
-
-/* ==============================================
-   UPLOAD KE GOOGLE DRIVE — DENGAN RETRY & TIMEOUT
-   ============================================== */
-async function uploadToDrive(base64Image, fileName, attempt) {
-  attempt = attempt || 0;
-  var maxRetry = 3;
-  try {
-    var controller = new AbortController();
-    var timeout = setTimeout(function() { controller.abort(); }, 45000); /* 45 detik timeout */
-
-    var resp = await fetch(DRIVE_API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ image: base64Image, fileName: fileName, mimeType: 'image/jpeg' }),
-      signal: controller.signal
-    });
-    clearTimeout(timeout);
-
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    var result = await resp.json();
-    if (result.success && result.url) return result.url;
-    throw new Error(result.error || 'Upload gagal');
-  } catch (err) {
-    console.warn('Upload Drive attempt ' + (attempt + 1) + ' error:', err.message);
-    if (attempt < maxRetry - 1) {
-      var delay = 1500 * (attempt + 1);
-      console.log('Retry upload setelah ' + delay + 'ms...');
-      await new Promise(function(r) { setTimeout(r, delay); });
-      return uploadToDrive(base64Image, fileName, attempt + 1);
-    }
-    return null;
-  }
+function getVideoThumbEmbed(url) {
+  var ym = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (ym) return { thumb: 'https://img.youtube.com/vi/'+ym[1]+'/hqdefault.jpg', embed: 'https://www.youtube.com/embed/'+ym[1] };
+  return null;
 }
 
 /* ==============================================
    UTILITAS
    ============================================== */
-function escHtml(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-function sFS(s, t) { var el = document.getElementById('fbs'); el.className = 'fbs ' + s; document.getElementById('fbt').textContent = t; }
+function getAvatarColor(name) {
+  var h = 0; for (var i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+}
+function getInitials(name) {
+  var parts = name.replace(/[^a-zA-Z\s]/g, '').split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return parts[0] ? parts[0].substring(0, 2).toUpperCase() : '??';
+}
+function timeAgo(ts) {
+  var s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return 'Baru saja';
+  if (s < 3600) return Math.floor(s / 60) + ' menit lalu';
+  if (s < 86400) return Math.floor(s / 3600) + ' jam lalu';
+  if (s < 604800) return Math.floor(s / 86400) + ' hari lalu';
+  return new Date(ts).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+function sisaHari(ts) {
+  var d = Math.max(0, 7 - Math.floor((Date.now() - ts) / 86400000));
+  return d;
+}
+function escHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
-function tst(m, tp) {
-  tp = tp || 'ok';
-  var c = document.getElementById('toastC'), t = document.createElement('div');
-  t.className = 'ts ' + tp;
-  t.innerHTML = '<i class="fa-solid ' + (tp === 'ok' ? 'fa-circle-check' : 'fa-circle-exclamation') + '" style="color:' + (tp === 'ok' ? 'var(--glow)' : 'var(--accent2)') + '"></i> ' + m;
+/* ==============================================
+   TOAST
+   ============================================== */
+function toast(msg, type) {
+  var c = document.getElementById('toastC');
+  var t = document.createElement('div');
+  t.className = 'ts ' + (type === 'error' ? 'er' : 'ok');
+  var ico = type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check';
+  var clr = type === 'error' ? 'var(--accent2)' : 'var(--teal)';
+  t.innerHTML = '<i class="fa-solid '+ico+'" style="color:'+clr+';"></i><span>'+msg+'</span>';
   c.appendChild(t);
   requestAnimationFrame(function() { t.classList.add('sh'); });
   setTimeout(function() { t.classList.remove('sh'); setTimeout(function() { t.remove(); }, 400); }, 3500);
 }
 
-function tAgo(ts) {
-  var d = Date.now() - ts, m = Math.floor(d / 60000);
-  if (m < 1) return 'Baru saja';
-  if (m < 60) return m + ' menit lalu';
-  var h = Math.floor(m / 60);
-  if (h < 24) return h + ' jam lalu';
-  return Math.floor(h / 24) + ' hari lalu';
+/* ==============================================
+   JAM
+   ============================================== */
+function updateClock() {
+  var n = new Date();
+  document.getElementById('cH').textContent = String(n.getHours()).padStart(2, '0');
+  document.getElementById('cM').textContent = String(n.getMinutes()).padStart(2, '0');
+  var days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  var months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  document.getElementById('dS').textContent = days[n.getDay()] + ', ' + n.getDate() + ' ' + months[n.getMonth()];
+  document.getElementById('dD').textContent = n.getFullYear();
 }
-
-function sH(ts) { return Math.max(0, 7 - Math.floor((Date.now() - ts) / 86400000)); }
-function gI(n) { return n.split(' ').map(function(w) { return w[0]; }).filter(Boolean).slice(0, 2).join('').toUpperCase(); }
-
-var aC = ['#ff6b35', '#118ab2', '#e63946', '#06d6a0', '#ffd166', '#a855f7', '#ff85a1'];
-function gAC(n) { var h = 0; for (var i = 0; i < n.length; i++) h = n.charCodeAt(i) + ((h << 5) - h); return aC[Math.abs(h) % aC.length]; }
-
-var cL = { puisi: 'Puisi', cerita: 'Cerita', opini: 'Opini', quotes: 'Quotes', foto: 'Foto', lainnya: 'Lainnya' };
-var cI = { puisi: 'fa-feather', cerita: 'fa-book-open', opini: 'fa-comment-dots', quotes: 'fa-quote-left', foto: 'fa-camera', lainnya: 'fa-star' };
 
 /* ==============================================
-   KOMPRESI GAMBAR — BERTAHAP, OTOMATIS SAMPAI <10MB
+   RENDER KARTU
    ============================================== */
-function kompresiGambar(file, maxW, quality) {
-  return new Promise(function(resolve, reject) {
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      var img = new Image();
-      img.onload = function() {
-        var w = img.width, h = img.height;
-        if (w > maxW) { h = Math.round(h * (maxW / w)); w = maxW; }
-        var c = document.createElement('canvas');
-        c.width = Math.max(1, w); c.height = Math.max(1, h);
-        var ctx = c.getContext('2d');
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, c.width, c.height);
-        ctx.drawImage(img, 0, 0, c.width, c.height);
-        var r = c.toDataURL('image/jpeg', quality);
-        if (!r || r === 'data:,') { reject(new Error('Kompresi gagal')); return; }
-        resolve(r);
-      };
-      img.onerror = function() { reject(new Error('Gagal memuat gambar')); };
-      img.src = e.target.result;
-    };
-    reader.onerror = function() { reject(new Error('Gagal membaca file')); };
-    reader.readAsDataURL(file);
-  });
-}
-
-/* Kompresi otomatis bertahap sampai ukuran aman untuk Firebase (~800KB target) */
-async function kompresiOtomatis(file, upText, upPct, upFill) {
-  /* Cek ukuran asli */
-  var maxSize = 10 * 1024 * 1024; /* 10MB batas input */
-  if (file.size > maxSize) {
-    throw new Error('Ukuran file ' + (file.size / 1024 / 1024).toFixed(1) + 'MB melebihi batas 10MB');
+function renderKarya() {
+  var g = document.getElementById('kG');
+  var e = document.getElementById('eS');
+  var filtered = KL;
+  if (cFilter !== 'semua') {
+    filtered = KL.filter(function(k) { return k.kategori === cFilter; });
   }
+  document.getElementById('tK').textContent = KL.length;
+  if (filtered.length === 0) {
+    g.innerHTML = '';
+    e.style.display = 'block';
+    return;
+  }
+  e.style.display = 'none';
+  var html = '';
+  filtered.forEach(function(k, i) {
+    var idx = KL.indexOf(k);
+    var cc = CAT_COLORS[k.kategori] || CAT_COLORS.lainnya;
+    var ac = getAvatarColor(k.nama);
+    var ini = getInitials(k.nama);
+    var sd = sisaHari(k.timestamp);
+    var likes = (k.likes || 0);
+    var isLiked = !!likedItems[k.id];
+    var comments = k.comments ? Object.keys(k.comments).length : 0;
+    var hasImg = isValidImageUrl(k.gambar);
+    var hasVid = k.videoEmbed || k.videoUrl;
+    var vidInfo = hasVid ? getVideoThumbEmbed(k.videoUrl || '') : null;
 
-  var levels = [
-    { w: 1200, q: 0.85 },
-    { w: 1000, q: 0.75 },
-    { w: 800, q: 0.65 },
-    { w: 600, q: 0.55 },
-    { w: 450, q: 0.45 },
-    { w: 320, q: 0.35 }
-  ];
+    html += '<div class="kc c-'+k.kategori+' ki" style="animation-delay:'+Math.min(i*0.06, 0.5)+'s;">';
 
-  var targetKB = 700; /* Target aman untuk Firebase Realtime DB */
-
-  for (var i = 0; i < levels.length; i++) {
-    var lv = levels[i];
-    if (upText) upText.textContent = 'Mengompres (' + lv.w + 'px, ' + Math.round(lv.q * 100) + '%)...';
-    if (upPct) upPct.textContent = Math.round(((i + 1) / levels.length) * 80) + '%';
-    if (upFill) upFill.style.width = ((i + 1) / levels.length * 80) + '%';
-
-    try {
-      var result = await kompresiGambar(file, lv.w, lv.q);
-      var sizeKB = Math.round((result.length * 3 / 4) / 1024);
-
-      console.log('Kompresi level ' + i + ': ' + lv.w + 'px q=' + lv.q + ' = ' + sizeKB + 'KB');
-
-      if (sizeKB <= targetKB || i === levels.length - 1) {
-        if (upText) upText.textContent = 'Kompresi selesai (' + sizeKB + 'KB)';
-        if (upPct) upPct.textContent = '100%';
-        if (upFill) upFill.style.width = '100%';
-        return { base64: result, sizeKB: sizeKB };
-      }
-    } catch (err) {
-      if (i === levels.length - 1) throw err;
-      console.warn('Level ' + i + ' gagal, coba level berikutnya:', err.message);
+    /* Gambar */
+    if (hasImg) {
+      html += renderImage(k.gambar, k.judul || 'Gambar karya', 'kimg', idx);
+    } else if (vidInfo && vidInfo.thumb) {
+      html += '<div class="video-thumb" onclick="opR('+idx+')">'+
+        '<img src="'+vidInfo.thumb+'" alt="Video thumbnail" loading="lazy">'+
+        '<div class="video-play"><span><i class="fa-solid fa-play" style="margin-left:2px;"></i></span></div></div>';
     }
-  }
-  throw new Error('Semua level kompresi gagal');
+
+    /* Konten */
+    html += '<div style="padding:14px 16px 16px;">';
+
+    /* Kategori + sisa hari */
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
+    html += '<span class="tb cat-'+k.kategori+'"><i class="fa-solid '+cc.icon+'" style="font-size:8px;"></i> '+escHtml(k.kategori)+'</span>';
+    if (sd > 0) {
+      html += '<span class="sw"><i class="fa-regular fa-clock" style="font-size:9px;"></i> '+sd+' hari lagi</span>';
+    }
+    html += '</div>';
+
+    /* Judul */
+    if (k.judul) {
+      html += '<h3 style="font-size:15px;font-weight:800;color:var(--fg);margin-bottom:6px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">'+escHtml(k.judul)+'</h3>';
+    }
+
+    /* Isi */
+    var preview = k.isi || '';
+    var maxLen = hasImg || vidInfo ? 80 : 140;
+    if (preview.length > maxLen) preview = preview.substring(0, maxLen) + '...';
+    html += '<p style="font-size:12px;color:var(--fg2);line-height:1.6;margin-bottom:12px;font-weight:400;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">'+escHtml(preview)+'</p>';
+
+    /* Author + waktu */
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">';
+    html += '<div class="ab"><span class="aa" style="background:'+ac+';">'+ini+'</span><span style="color:var(--fg2);">'+escHtml(k.nama)+'</span></div>';
+    html += '<span style="font-size:10px;color:var(--muted);font-weight:500;">'+timeAgo(k.timestamp)+'</span>';
+    html += '</div>';
+
+    /* Actions */
+    html += '<div style="display:flex;align-items:center;gap:6px;">';
+    html += '<button class="like-btn '+(isLiked?'liked':'')+'" onclick="event.stopPropagation();toggleLike(\''+k.id+'\')"><i class="fa-'+(isLiked?'solid':'regular')+' fa-heart"></i> '+likes+'</button>';
+    html += '<button class="comment-btn" onclick="event.stopPropagation();opR('+idx+',true)"><i class="fa-regular fa-comment"></i> '+comments+'</button>';
+    html += '</div>';
+
+    html += '</div>'; /* end padding */
+
+    /* Tombol hapus */
+    html += '<button class="bd" onclick="event.stopPropagation();confirmDel(\''+k.id+'\',this)" title="Hapus karya"><i class="fa-solid fa-trash-can"></i></button>';
+
+    html += '</div>';
+  });
+  g.innerHTML = html;
 }
 
 /* ==============================================
-   ANIMASI BACKGROUND
+   MODAL BACA
    ============================================== */
-function cAnimasi() {
-  var bg = document.getElementById('bgScene');
-  var colors = ['var(--pink)', 'var(--accent)', 'var(--yellow)', 'var(--glow)', 'var(--blue)', 'var(--purple)'];
-  var emojis = ['\u2B50', '\uD83C\uDF38', '\uD83E\uDD8B', '\uD83C\uDF08', '\uD83C\uDF4E', '\uD83C\uDF88', '\uD83C\uDF3C', '\uD83C\uDF41', '\u2601\uFE0F', '\uD83D\uDCAB', '\uD83C\uDF3B', '\uD83C\uDF31'];
-  for (var i = 0; i < 5; i++) {
-    var b = document.createElement('div'); b.className = 'balloon';
-    b.style.left = (8 + Math.random() * 84) + '%';
-    b.style.animationDuration = (14 + Math.random() * 10) + 's';
-    b.style.animationDelay = (Math.random() * 15) + 's';
-    var col = colors[Math.floor(Math.random() * colors.length)];
-    b.innerHTML = '<div class="balloon-body" style="background:' + col + ';box-shadow:inset -3px -3px 6px rgba(0,0,0,.1);"></div><div class="balloon-string"></div>';
-    bg.appendChild(b);
+function opR(idx, focusComment) {
+  var k = KL[idx];
+  if (!k) return;
+  var cc = CAT_COLORS[k.kategori] || CAT_COLORS.lainnya;
+  var ac = getAvatarColor(k.nama);
+  var ini = getInitials(k.nama);
+  var likes = k.likes || 0;
+  var isLiked = !!likedItems[k.id];
+  var comments = k.comments ? Object.values(k.comments) : [];
+  comments.sort(function(a, b) { return (a.ts || 0) - (b.ts || 0); });
+  var sd = sisaHari(k.timestamp);
+
+  var html = '';
+
+  /* Gambar modal — besar & jelas */
+  if (isValidImageUrl(k.gambar)) {
+    html += renderModalImage(k.gambar, k.judul || 'Gambar karya');
   }
-  for (var i = 0; i < 10; i++) {
-    var s = document.createElement('div'); s.className = 'sparkle';
-    s.innerHTML = '<i class="fa-solid fa-star"></i>';
-    s.style.left = (5 + Math.random() * 90) + '%';
-    s.style.top = (5 + Math.random() * 60) + '%';
-    s.style.animationDuration = (1.5 + Math.random() * 2) + 's';
-    s.style.animationDelay = (Math.random() * 3) + 's';
-    s.style.fontSize = (8 + Math.random() * 10) + 'px';
-    s.style.color = colors[Math.floor(Math.random() * colors.length)];
-    bg.appendChild(s);
+
+  html += '<div style="padding:24px 28px 28px;">';
+
+  /* Close button */
+  html += '<button onclick="clRd()" style="position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);border:1px solid var(--border);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;z-index:10;transition:all .25s;"><i class="fa-solid fa-xmark"></i></button>';
+
+  /* Kategori + waktu */
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">';
+  html += '<span class="tb cat-'+k.kategori+'"><i class="fa-solid '+cc.icon+'" style="font-size:8px;"></i> '+escHtml(k.kategori)+'</span>';
+  if (sd > 0) html += '<span class="sw"><i class="fa-regular fa-clock" style="font-size:9px;"></i> '+sd+' hari lagi</span>';
+  html += '<span style="font-size:10px;color:var(--muted);font-weight:500;margin-left:auto;">'+timeAgo(k.timestamp)+'</span>';
+  html += '</div>';
+
+  /* Judul */
+  if (k.judul) {
+    html += '<h2 style="font-size:22px;font-weight:900;color:var(--fg);margin-bottom:6px;line-height:1.3;">'+escHtml(k.judul)+'</h2>';
   }
-  for (var i = 0; i < 8; i++) {
-    var f = document.createElement('div'); f.className = 'flower';
-    f.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-    f.style.left = (3 + Math.random() * 94) + '%';
-    f.style.animationName = 'floatUp2';
-    f.style.animationDuration = (18 + Math.random() * 14) + 's';
-    f.style.animationDelay = (Math.random() * 20) + 's';
-    f.style.fontSize = (16 + Math.random() * 10) + 'px';
-    bg.appendChild(f);
+
+  /* Author */
+  html += '<div class="ab" style="margin-bottom:20px;"><span class="aa" style="background:'+ac+';">'+ini+'</span><span style="color:var(--fg2);">'+escHtml(k.nama)+'</span></div>';
+
+  /* Isi karya */
+  html += '<div style="font-size:14px;color:var(--fg2);line-height:1.85;font-weight:400;white-space:pre-wrap;margin-bottom:20px;">'+escHtml(k.isi)+'</div>';
+
+  /* Video embed di modal */
+  if (k.videoEmbed) {
+    html += '<div class="video-embed-modal" style="border-radius:12px;overflow:hidden;margin-bottom:20px;"><iframe src="'+k.videoEmbed+'" allowfullscreen loading="lazy"></iframe></div>';
   }
+
+  /* Actions */
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">';
+  html += '<button class="like-btn '+(isLiked?'liked':'')+'" onclick="toggleLike(\''+k.id+'\');opR('+idx+')"><i class="fa-'+(isLiked?'solid':'regular')+' fa-heart"></i> '+likes+'</button>';
+  html += '<span style="font-size:11px;color:var(--muted);font-weight:500;">'+comments.length+' komentar</span>';
+  html += '</div>';
+
+  /* Komentar */
+  html += '<div class="comments-section">';
+  if (comments.length > 0) {
+    comments.forEach(function(c) {
+      var cac = getAvatarColor(c.nama || 'Anon');
+      var cini = getInitials(c.nama || 'Anon');
+      html += '<div class="comment-item">';
+      html += '<div class="comment-avatar" style="background:'+cac+';">'+cini+'</div>';
+      html += '<div class="comment-bubble">';
+      html += '<div class="comment-name">'+escHtml(c.nama || 'Anonim')+'</div>';
+      html += '<div class="comment-text">'+escHtml(c.teks)+'</div>';
+      html += '<div class="comment-time">'+timeAgo(c.ts)+'</div>';
+      html += '</div></div>';
+    });
+  } else {
+    html += '<p style="font-size:12px;color:var(--muted);font-weight:500;text-align:center;padding:12px 0;">Belum ada komentar</p>';
+  }
+  html += '<div class="comment-input-row">';
+  html += '<input type="text" id="cmIn" placeholder="Tulis komentar..." maxlength="200" onkeydown="if(event.key===\'Enter\')addComment(\''+k.id+'\','+idx+')">';
+  html += '<button onclick="addComment(\''+k.id+'\','+idx+')"><i class="fa-solid fa-paper-plane"></i></button>';
+  html += '</div></div>';
+
+  html += '</div>';
+
+  document.getElementById('rdBox').innerHTML = html;
+  document.getElementById('rdMod').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  /* Fokus ke input komentar jika diminta */
+  if (focusComment) {
+    setTimeout(function() {
+      var cmIn = document.getElementById('cmIn');
+      if (cmIn) cmIn.focus();
+    }, 400);
+  }
+}
+
+function clRd() {
+  document.getElementById('rdMod').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
 /* ==============================================
    LIKE
    ============================================== */
-function toggleLike(karyaId, event) {
-  if (event) event.stopPropagation();
-  if (!db) { tst('Tidak terhubung ke database', 'er'); return; }
-  var likeRef = db.ref('likes/' + karyaId + '/_' + generateLocalId());
-  if (likedItems[karyaId]) {
-    likeRef.remove().then(function() { delete likedItems[karyaId]; saveLikes(); updateLikeUI(karyaId, false); }).catch(function(e) { console.error('Unlike error:', e); });
+function toggleLike(id) {
+  if (!db) return;
+  var ref = db.ref('karya/' + id + '/likes');
+  if (likedItems[id]) {
+    delete likedItems[id];
+    ref.transaction(function(v) { return (v || 1) - 1; });
   } else {
-    likeRef.set({ t: Date.now() }).then(function() {
-      likedItems[karyaId] = true; saveLikes(); updateLikeUI(karyaId, true);
-      if (event) { var btn = event.currentTarget || event.target.closest('.like-btn'); if (btn) spawnHearts(btn); }
-    }).catch(function(e) { console.error('Like error:', e); });
+    likedItems[id] = true;
+    ref.transaction(function(v) { return (v || 0) + 1; });
   }
-}
-
-function updateLikeUI(karyaId, isLiked) {
-  document.querySelectorAll('.like-btn[data-kid="' + karyaId + '"]').forEach(function(btn) {
-    btn.classList.toggle('liked', isLiked);
-    btn.querySelector('i').className = isLiked ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
-  });
-  if (db) {
-    db.ref('likes/' + karyaId).once('value', function(snap) {
-      var c = snap.val() ? Object.keys(snap.val()).length : 0;
-      document.querySelectorAll('.like-count-display[data-kid="' + karyaId + '"]').forEach(function(el) { el.textContent = c; });
-    });
-  }
-}
-
-function spawnHearts(btn) {
-  var r = btn.getBoundingClientRect();
-  for (var i = 0; i < 6; i++) {
-    var h = document.createElement('div');
-    h.innerHTML = '<i class="fa-solid fa-heart"></i>';
-    h.style.cssText = 'position:fixed;z-index:999;color:var(--accent2);font-size:' + (10 + Math.random() * 10) + 'px;pointer-events:none;left:' + (r.left + r.width / 2 + (Math.random() - 0.5) * 30) + 'px;top:' + r.top + 'px;opacity:1;transition:all .8s ease-out;';
-    document.body.appendChild(h);
-    requestAnimationFrame(function() { h.style.transform = 'translateY(-' + (30 + Math.random() * 40) + 'px) rotate(' + (Math.random() * 40 - 20) + 'deg) scale(' + (0.5 + Math.random()) + ')'; h.style.opacity = '0'; });
-    setTimeout(function() { h.remove(); }, 900);
-  }
-}
-
-var localId = null;
-function generateLocalId() {
-  if (localId) return localId;
-  var id = localStorage.getItem('mading_uid');
-  if (!id) { id = 'u_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8); localStorage.setItem('mading_uid', id); }
-  localId = id.replace(/[^a-zA-Z0-9_]/g, '_');
-  return localId;
+  saveLikes();
+  renderKarya();
 }
 
 /* ==============================================
    KOMENTAR
    ============================================== */
-function sendComment(karyaId) {
-  if (!db) { tst('Tidak terhubung ke database', 'er'); return; }
-  var input = document.getElementById('commentInput_' + karyaId);
-  if (!input) return;
-  var text = input.value.trim();
-  if (!text) { tst('Tulis komentar dulu', 'er'); input.focus(); return; }
-  if (text.length > 500) { tst('Komentar maksimal 500 karakter', 'er'); return; }
-  var nm = (document.getElementById('iN') || {}).value || '';
-  if (!nm.trim()) nm = 'Anonim';
-  db.ref('comments/' + karyaId).push({ nama: nm.trim(), teks: text, timestamp: Date.now(), uid: generateLocalId() }).then(function() { input.value = ''; tst('Komentar terkirim!', 'ok'); }).catch(function(e) { tst('Gagal mengirim komentar', 'er'); });
+function addComment(kid, idx) {
+  var inp = document.getElementById('cmIn');
+  if (!inp || !db) return;
+  var teks = inp.value.trim();
+  if (!teks) return;
+  var nama = localStorage.getItem('mading_last_name') || 'Anonim';
+  db.ref('karya/' + kid + '/comments').push({ nama: nama, teks: teks, ts: Date.now() });
+  inp.value = '';
+  toast('Komentar terkirim!');
+  /* Reopen modal setelah data update */
+  setTimeout(function() { opR(idx); }, 500);
 }
 
-function renderModalComments(container, kComments, karyaId) {
-  var keys = Object.keys(kComments);
-  if (!keys.length) { container.innerHTML = '<p style="text-align:center;color:var(--muted);font-size:12px;font-weight:600;padding:12px 0;">Belum ada komentar. Jadilah yang pertama!</p>'; return; }
-  keys.sort(function(a, b) { return kComments[a].timestamp - kComments[b].timestamp; });
-  var h = '';
-  keys.forEach(function(ck) {
-    var c = kComments[ck];
-    h += '<div class="comment-item"><div class="comment-avatar" style="background:' + gAC(c.nama || 'Anonim') + ';">' + gI(c.nama || 'A') + '</div><div class="comment-bubble"><div class="comment-name">' + escHtml(c.nama || 'Anonim') + '</div><div class="comment-text">' + escHtml(c.teks) + '</div><div class="comment-time">' + tAgo(c.timestamp) + '</div></div></div>';
-  });
-  container.innerHTML = h;
+/* ==============================================
+   HAPUS
+   ============================================== */
+function confirmDel(id, btn) {
+  var card = btn.closest('.kc');
+  if (!card || card.querySelector('.confirm-del')) return;
+  var overlay = document.createElement('div');
+  overlay.className = 'confirm-del';
+  overlay.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="font-size:24px;color:var(--accent2);"></i>'+
+    '<p style="font-size:13px;font-weight:700;color:var(--fg);">Hapus karya ini?</p>'+
+    '<p style="font-size:11px;color:var(--muted);font-weight:500;">Tindakan tidak bisa dibatalkan</p>'+
+    '<div style="display:flex;gap:8px;">'+
+    '<button onclick="this.closest(\'.confirm-del\').remove()" style="padding:8px 20px;border-radius:10px;border:1.5px solid var(--border);background:var(--card);color:var(--fg);font-size:12px;font-weight:600;cursor:pointer;font-family:\'Plus Jakarta Sans\',sans-serif;">Batal</button>'+
+    '<button onclick="doDelete(\''+id+'\',this)" style="padding:8px 20px;border-radius:10px;border:none;background:var(--accent2);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:\'Plus Jakarta Sans\',sans-serif;">Hapus</button>'+
+    '</div>';
+  card.appendChild(overlay);
+}
+function doDelete(id, btn) {
+  if (!db) return;
+  db.ref('karya/' + id).remove();
+  toast('Karya berhasil dihapus');
 }
 
 /* ==============================================
    PANEL TULIS
    ============================================== */
 function opP() {
-  if (isSubmitting) return;
-  if (!isUploadOpen()) {
-    document.getElementById('pOv').classList.add('open');
-    document.getElementById('fabB').style.transform = 'scale(0)';
-    document.body.style.overflow = 'hidden';
-    disablePanelInputs(true);
-    return;
-  }
-  disablePanelInputs(false);
+  if (!isUploadOpen()) return;
   document.getElementById('pOv').classList.add('open');
-  document.getElementById('fabB').style.transform = 'scale(0)';
   document.body.style.overflow = 'hidden';
+  /* Restore nama terakhir */
+  var lastName = localStorage.getItem('mading_last_name');
+  if (lastName) document.getElementById('iN').value = lastName;
 }
-
 function clP() {
-  if (isSubmitting) return;
   document.getElementById('pOv').classList.remove('open');
-  document.getElementById('fabB').style.transform = '';
   document.body.style.overflow = '';
-  disablePanelInputs(false);
 }
 
-function pC(el) { if (isSubmitting) return; document.querySelectorAll('#cC .ch').forEach(function(c) { c.classList.remove('s'); }); el.classList.add('s'); sCat = el.dataset.c; }
+function pC(el) {
+  document.querySelectorAll('#cC .ch').forEach(function(c) { c.classList.remove('s'); });
+  el.classList.add('s');
+  sCat = el.getAttribute('data-c');
+}
 
-var uZ = document.getElementById('uZ');
-uZ.addEventListener('dragover', function(e) { e.preventDefault(); uZ.classList.add('dg'); });
-uZ.addEventListener('dragleave', function() { uZ.classList.remove('dg'); });
-uZ.addEventListener('drop', function(e) { e.preventDefault(); uZ.classList.remove('dg'); if (e.dataTransfer.files.length) { document.getElementById('fI').files = e.dataTransfer.files; hF(document.getElementById('fI')); } });
-
-/* Handler file gambar — menerima hingga 10MB */
-async function hF(inp) {
-  var f = inp.files[0]; if (!f) return;
-
-  /* Batas 10MB */
-  if (f.size > 10 * 1024 * 1024) {
-    tst('Ukuran gambar maksimal 10MB. File kamu ' + (f.size / 1024 / 1024).toFixed(1) + 'MB', 'er');
-    inp.value = ''; return;
-  }
-  if (!f.type.startsWith('image/')) { tst('Hanya file gambar yang diperbolehkan', 'er'); inp.value = ''; return; }
-
-  sFile = f; sFileBase64 = null;
-
-  /* Tampilkan progress */
-  var bar = document.getElementById('compressBar'), fill = document.getElementById('compressFill');
-  var upProg = document.getElementById('uploadProgress');
-  var upText = document.getElementById('upText'), upPct = document.getElementById('upPct'), upFillEl = document.getElementById('upFill');
-
-  bar.classList.add('active'); fill.style.width = '10%';
-  upProg.style.display = 'block'; upFillEl.style.width = '5%';
-  upText.textContent = 'Membaca file (' + (f.size / 1024).toFixed(0) + 'KB)...';
-  upPct.textContent = '5%';
-
-  try {
-    var result = await kompresiOtomatis(f, upText, upPct, upFillEl);
-    sFileBase64 = result.base64;
-
+/* File handler */
+function hF(input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { toast('Ukuran file maksimal 10MB', 'error'); input.value = ''; return; }
+  if (!file.type.startsWith('image/')) { toast('Hanya file gambar yang diizinkan', 'error'); input.value = ''; return; }
+  sFile = file;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    sFileBase64 = e.target.result;
     document.getElementById('uP').style.display = 'none';
-    var v = document.getElementById('uV'); v.style.display = 'block';
-    v.innerHTML = '<img src="' + result.base64 + '" alt="Preview" style="max-height:100px;border-radius:8px;object-fit:contain;"><p class="text-[10px] mt-2" style="color:var(--muted);font-weight:600;">' + result.sizeKB + 'KB <span style="color:var(--glow);font-weight:800;"><i class="fa-solid fa-cloud-arrow-up" style="font-size:9px;"></i> Akan diarsip ke Drive</span> <span style="color:var(--accent2);cursor:pointer;font-weight:800;" onclick="cFl(event)">Hapus</span></p>';
-
-    setTimeout(function() { bar.classList.remove('active'); fill.style.width = '0%'; upProg.style.display = 'none'; }, 600);
-  } catch (err) {
-    console.error('Kompresi gagal:', err);
-    tst('Gagal memproses gambar: ' + err.message, 'er');
-    bar.classList.remove('active'); fill.style.width = '0%'; upProg.style.display = 'none';
-    inp.value = ''; sFile = null;
-  }
+    var v = document.getElementById('uV');
+    v.style.display = 'block';
+    v.innerHTML = '<img src="'+e.target.result+'" alt="Preview" style="max-height:120px;border-radius:10px;object-fit:contain;">'+
+      '<p style="font-size:11px;color:var(--teal);font-weight:600;margin-top:6px;"><i class="fa-solid fa-check-circle" style="margin-right:4px;"></i>'+file.name+' ('+(file.size/1024).toFixed(0)+' KB)</p>';
+  };
+  reader.readAsDataURL(file);
 }
 
-function cFl(e) {
-  e.stopPropagation(); sFile = null; sFileBase64 = null;
-  document.getElementById('fI').value = '';
-  document.getElementById('uP').style.display = '';
-  document.getElementById('uV').style.display = 'none';
-}
-
-/* ==============================================
-   STEP INDICATOR
-   ============================================== */
-function setStep(id, state) {
-  var el = document.getElementById(id); if (!el) return;
-  el.className = 'drive-step ' + state;
-  if (state === 'done') el.querySelector('i').className = 'fa-solid fa-circle-check';
-  else if (state === 'fail') el.querySelector('i').className = 'fa-solid fa-circle-exclamation';
-}
-
-function resetSteps() {
-  ['ds1', 'ds2', 'ds3'].forEach(function(id) {
-    var el = document.getElementById(id); el.className = 'drive-step pending';
-    var icons = { ds1: 'fa-image', ds2: 'fa-cloud-arrow-up', ds3: 'fa-database' };
-    el.querySelector('i').className = 'fa-solid ' + icons[id];
-    el.querySelector('i').style.cssText = 'font-size:10px;width:14px;text-align:center;';
-  });
-}
-
-/* ==============================================
-   SUBMIT KARYA — LEBIH STABIL
-   ============================================== */
-function setSubmitLoading(on, txt) {
-  var btn = document.getElementById('bS'), icon = document.getElementById('bSI'), t = document.getElementById('bST');
-  var ov = document.getElementById('submitOverlay'), ot = document.getElementById('overlayText');
-  var cb = document.getElementById('closePanelBtn'), steps = document.getElementById('driveSteps');
-  var inputs = document.querySelectorAll('#pnl .ip, #pnl .ch, #pnl .uz');
-  if (on) {
-    isSubmitting = true; btn.disabled = true;
-    icon.style.display = 'none';
-    var sp = document.createElement('div'); sp.className = 'sp-in'; sp.id = 'btnSpinner';
-    btn.insertBefore(sp, t); t.textContent = txt || 'Mengirim...';
-    ot.textContent = txt || 'Mengirim karyamu...'; ov.classList.add('active');
-    inputs.forEach(function(el) { el.style.pointerEvents = 'none'; el.style.opacity = '.5'; });
-    cb.style.pointerEvents = 'none'; cb.style.opacity = '.4';
-  } else {
-    isSubmitting = false; btn.disabled = false;
-    var sp = document.getElementById('btnSpinner'); if (sp) sp.remove();
-    icon.className = 'fa-solid fa-paper-plane'; icon.style.display = '';
-    t.textContent = 'Publikasikan ke Mading'; ov.classList.remove('active');
-    steps.style.display = 'none';
-    inputs.forEach(function(el) { el.style.pointerEvents = ''; el.style.opacity = ''; });
-    cb.style.pointerEvents = ''; cb.style.opacity = '';
-  }
-}
-
-async function subK() {
-  if (isSubmitting) return;
-  if (!isUploadOpen()) { tst('Upload hanya dibuka hari Jumat–Minggu!', 'er'); return; }
-
-  var nm = document.getElementById('iN').value.trim();
-  var jd = document.getElementById('iJ').value.trim();
-  var is = document.getElementById('iI').value.trim();
-
-  if (!nm) { tst('Tulis namamu dulu ya!', 'er'); document.getElementById('iN').focus(); return; }
-  if (!sCat) { tst('Pilih kategori karyamu', 'er'); return; }
-  if (!is && sCat !== 'foto' && !sVideoUrl) { tst('Tulis isi karyamu!', 'er'); document.getElementById('iI').focus(); return; }
-  if (sCat === 'foto' && !sFile && !sFileBase64 && !is && !sVideoUrl) { tst('Upload foto, video, atau tulis caption', 'er'); return; }
-
-  var hasImage = !!sFileBase64;
-  var imageUrlForFirebase = '';
-  var driveArchived = false;
-
-  if (hasImage) {
-    document.getElementById('driveSteps').style.display = 'block';
-    resetSteps();
-  }
-
-  /* Langkah 1: Upload ke Drive (kompresi sudah dilakukan saat pilih file) */
-  if (hasImage && sFile) {
-    setStep('ds1', 'done'); /* Sudah dikompres saat pilih file */
-    setSubmitLoading(true, 'Mengarsipkan gambar ke Drive...');
-    setStep('ds2', 'active');
-
-    /* Kompres untuk arsip Drive (kualitas lebih tinggi) */
-    try {
-      var archiveImage = await kompresiGambar(sFile, 1000, 0.8);
-      var safeName = (nm || 'siswa').replace(/[^a-zA-Z0-9]/g, '_') + '_' + (sCat || 'karya') + '_' + Date.now() + '.jpg';
-      var driveUrl = await uploadToDrive(archiveImage, safeName);
-      if (driveUrl) {
-        driveArchived = true;
-        setStep('ds2', 'done');
-        setSubmitLoading(true, 'Gambar tersimpan di Drive! Menyimpan ke database...');
-      } else {
-        setStep('ds2', 'fail');
-        setSubmitLoading(true, 'Drive tidak tersedia, gambar tetap disimpan lokal...');
-      }
-    } catch (e) {
-      console.error('Gagal upload Drive:', e);
-      setStep('ds2', 'fail');
-      setSubmitLoading(true, 'Upload Drive gagal, melanjutkan...');
+/* Drag & drop */
+(function() {
+  var uz = document.getElementById('uZ');
+  if (!uz) return;
+  uz.addEventListener('dragover', function(e) { e.preventDefault(); uz.classList.add('dg'); });
+  uz.addEventListener('dragleave', function() { uz.classList.remove('dg'); });
+  uz.addEventListener('drop', function(e) {
+    e.preventDefault(); uz.classList.remove('dg');
+    if (e.dataTransfer.files.length > 0) {
+      document.getElementById('fI').files = e.dataTransfer.files;
+      hF(document.getElementById('fI'));
     }
+  });
+})();
 
-    imageUrlForFirebase = sFileBase64;
-  } else if (hasImage) {
-    imageUrlForFirebase = sFileBase64;
-    setStep('ds1', 'done');
-  }
+/* ==============================================
+   KOMPRESI GAMBAR
+   ============================================== */
+function compressImage(file, quality, callback) {
+  var bar = document.getElementById('compressBar');
+  var fill = document.getElementById('compressFill');
+  bar.classList.add('active');
+  fill.style.width = '30%';
+  setDriveStep('ds1', 'active');
 
-  /* Langkah 2: Simpan ke Firebase */
-  if (hasImage) setStep('ds3', 'active');
-  setSubmitLoading(true, hasImage ? 'Menyimpan ke database...' : 'Mengirim karya...');
-
-  try {
-    var data = {
-      nama: nm, kategori: sCat, judul: jd, isi: is,
-      imageUrl: imageUrlForFirebase,
-      driveArchived: driveArchived,
-      videoUrl: sVideoUrl || '', videoEmbed: sVideoEmbed || '',
-      videoPlatform: getVideoPlatform(sVideoUrl) || '',
-      timestamp: Date.now()
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    fill.style.width = '60%';
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var maxW = 1200, maxH = 1200;
+      var w = img.width, h = img.height;
+      if (w > maxW || h > maxH) {
+        if (w > h) { h = Math.round(h * maxW / w); w = maxW; }
+        else { w = Math.round(w * maxH / h); h = maxH; }
+      }
+      canvas.width = w; canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, w, h);
+      fill.style.width = '90%';
+      var dataUrl = canvas.toDataURL('image/jpeg', quality);
+      fill.style.width = '100%';
+      setDriveStep('ds1', 'done');
+      setTimeout(function() { bar.classList.remove('active'); fill.style.width = '0%'; }, 500);
+      callback(dataUrl);
     };
+    img.onerror = function() {
+      setDriveStep('ds1', 'fail');
+      bar.classList.remove('active');
+      callback(null);
+    };
+    img.src = e.target.result;
+  };
+  reader.onerror = function() {
+    setDriveStep('ds1', 'fail');
+    bar.classList.remove('active');
+    callback(null);
+  };
+  reader.readAsDataURL(file);
+}
 
-    /* Cek ukuran payload */
-    var payloadSize = JSON.stringify(data).length;
-    console.log('Payload size:', Math.round(payloadSize / 1024), 'KB');
-
-    if (payloadSize > 8 * 1024 * 1024) {
-      /* Terlalu besar, kompres lebih agresif */
-      console.warn('Payload terlalu besar, kompres ulang...');
-      if (sFile) {
-        var recompressed = await kompresiGambar(sFile, 320, 0.3);
-        data.imageUrl = recompressed;
-        payloadSize = JSON.stringify(data).length;
-        console.log('Setelah re-kompresi:', Math.round(payloadSize / 1024), 'KB');
-      }
-      if (payloadSize > 8 * 1024 * 1024) {
-        /* Masih terlalu besar, simpan tanpa gambar */
-        data.imageUrl = '';
-        data.driveArchived = false;
-        tst('Gambar terlalu besar, karya disimpan tanpa gambar', 'er');
-      }
-    }
-
-    if (db) {
-      await db.ref('karya').push(data);
-    } else {
-      data.id = 'local_' + Date.now();
-      KL.unshift(data); rK();
-    }
-
-    if (hasImage) setStep('ds3', 'done');
-
-    /* Reset form */
-    document.getElementById('iN').value = '';
-    document.getElementById('iJ').value = '';
-    document.getElementById('iI').value = '';
-    cFl(new Event('click'));
-    clearVideoUrl();
-    document.querySelectorAll('#cC .ch').forEach(function(c) { c.classList.remove('s'); });
-    sCat = ''; sFile = null; sFileBase64 = null;
-
-    setSubmitLoading(false); clP();
-
-    if (driveArchived) tst('Dipublikasikan & gambar tersimpan di Google Drive!', 'ok');
-    else if (hasImage) tst('Karya dipublikasikan!', 'ok');
-    else tst('Karyamu berhasil dipublikasikan!', 'ok');
-  } catch (e) {
-    console.error('Submit error:', e);
-    if (hasImage) setStep('ds3', 'fail');
-    setSubmitLoading(false);
-
-    /* Fallback: coba simpan tanpa gambar */
-    if (e.message && (e.message.indexOf('PAYLOAD_TOO_LARGE') !== -1 || e.message.indexOf('quota') !== -1)) {
-      try {
-        data.imageUrl = ''; data.driveArchived = false;
-        await db.ref('karya').push(data);
-        tst('Karya tersimpan tanpa gambar (data terlalu besar)', 'ok');
-        setSubmitLoading(false); clP(); return;
-      } catch(e2) { /* abaikan */ }
-    }
-
-    /* Fallback: coba retry sekali lagi */
-    try {
-      console.log('Retry submit...');
-      await new Promise(function(r) { setTimeout(r, 2000); });
-      await db.ref('karya').push(data);
-      if (hasImage) setStep('ds3', 'done');
-      setSubmitLoading(false); clP();
-      tst('Karya berhasil dikirim (retry)', 'ok'); return;
-    } catch(e3) { /* abaikan */ }
-
-    tst('Gagal mengirim karya: ' + (e.message || 'Coba lagi nanti'), 'er');
-  }
+function setDriveStep(id, state) {
+  var el = document.getElementById(id);
+  if (el) { el.className = 'drive-step ' + state; }
 }
 
 /* ==============================================
-   RENDER KARTU KARYA
+   UPLOAD KE DRIVE
    ============================================== */
-function rK() {
-  var g = document.getElementById('kG'), es = document.getElementById('eS');
-  var filtered = cFilter === 'semua' ? KL : KL.filter(function(k) { return k.kategori === cFilter; });
-  document.getElementById('tK').textContent = filtered.length;
+function uploadToDrive(base64, callback) {
+  setDriveStep('ds2', 'active');
+  var upProg = document.getElementById('uploadProgress');
+  var upFill = document.getElementById('upFill');
+  var upText = document.getElementById('upText');
+  var upPct = document.getElementById('upPct');
+  upProg.style.display = 'block';
+  upFill.style.width = '0%';
+  upText.textContent = 'Mengupload ke Drive...';
 
-  if (!filtered.length) { g.innerHTML = ''; es.style.display = 'block'; return; }
-  es.style.display = 'none';
+  /* Simulasi progress karena fetch tidak support progress */
+  var progress = 0;
+  var progressInterval = setInterval(function() {
+    progress += Math.random() * 15;
+    if (progress > 90) progress = 90;
+    upFill.style.width = progress + '%';
+    upPct.textContent = Math.round(progress) + '%';
+  }, 300);
 
-  var h = '';
-  filtered.forEach(function(k, idx) {
-    var ri = KL.indexOf(k);
-    var il = !!likedItems[k.id];
-    h += '<div class="kc c-' + k.kategori + ' ki" style="animation-delay:' + (idx * 0.06) + 's;">';
-    h += '<div class="pn"></div>';
-    h += '<button class="bd" onclick="event.stopPropagation();delK(\'' + k.id + '\',this)" title="Hapus karya"><i class="fa-solid fa-trash"></i></button>';
-    if (k.imageUrl) h += renderImage(k.imageUrl, k.judul || 'Gambar karya', 'kimg', ri);
-    if (k.videoEmbed) h += renderVideoCard(k.videoEmbed, k.videoPlatform || 'Video');
-    h += '<div class="p-4">';
-    h += '<div class="flex items-center gap-2 mb-2"><div class="ab"><div class="aa" style="background:' + gAC(k.nama) + ';">' + gI(k.nama) + '</div><span>' + escHtml(k.nama) + '</span></div><span class="tb"><i class="fa-solid ' + (cI[k.kategori] || 'fa-star') + '" style="font-size:8px;"></i> ' + (cL[k.kategori] || k.kategori) + '</span></div>';
-    if (k.judul) h += '<h3 class="ft font-extrabold text-sm mb-1" style="color:var(--fg);line-height:1.3;">' + escHtml(k.judul) + '</h3>';
-    if (k.isi) { var st = k.isi.length > 150 ? k.isi.substring(0, 150) + '...' : k.isi; h += '<p class="text-xs leading-relaxed mb-3" style="color:var(--muted);font-weight:600;white-space:pre-line;">' + escHtml(st) + '</p>'; }
-    h += '<div class="sw mb-3"><i class="fa-solid fa-clock" style="font-size:9px;"></i> ' + sH(k.timestamp) + ' hari lagi';
-    if (k.driveArchived) h += ' <span style="color:var(--glow);font-size:9px;"><i class="fa-solid fa-cloud-arrow-up"></i></span>';
-    h += '</div>';
-    h += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">';
-    h += '<button class="like-btn ' + (il ? 'liked' : '') + '" data-kid="' + k.id + '" onclick="toggleLike(\'' + k.id + '\', event)"><i class="' + (il ? 'fa-solid' : 'fa-regular') + ' fa-heart"></i><span class="like-count-display" data-kid="' + k.id + '">0</span></button>';
-    h += '<button class="comment-btn" onclick="event.stopPropagation();opR(' + ri + ')"><i class="fa-regular fa-comment"></i><span>Komentar</span></button>';
-    h += '<span style="font-size:10px;color:var(--border);font-weight:600;margin-left:auto;">' + tAgo(k.timestamp) + '</span>';
-    h += '</div></div></div>';
+  fetch(DRIVE_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: base64
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    clearInterval(progressInterval);
+    upFill.style.width = '100%';
+    upPct.textContent = '100%';
+    upText.textContent = 'Upload selesai!';
+    setDriveStep('ds2', 'done');
+    setTimeout(function() { upProg.style.display = 'none'; }, 1000);
+    callback(null, data);
+  })
+  .catch(function(err) {
+    clearInterval(progressInterval);
+    setDriveStep('ds2', 'fail');
+    upText.textContent = 'Gagal upload';
+    callback(err);
   });
-  g.innerHTML = h;
+}
 
-  /* Update like count */
-  if (db) {
-    var uids = [];
-    filtered.forEach(function(k) { if (uids.indexOf(k.id) === -1) uids.push(k.id); });
-    uids.forEach(function(kid) {
-      db.ref('likes/' + kid).once('value', function(snap) {
-        var c = snap.val() ? Object.keys(snap.val()).length : 0;
-        document.querySelectorAll('.like-count-display[data-kid="' + kid + '"]').forEach(function(el) { el.textContent = c; });
+/* ==============================================
+   SUBMIT KARYA
+   ============================================== */
+function subK() {
+  if (isSubmitting) return;
+  var nama = document.getElementById('iN').value.trim();
+  var judul = document.getElementById('iJ').value.trim();
+  var isi = document.getElementById('iI').value.trim();
+
+  if (!nama) { toast('Nama wajib diisi', 'error'); document.getElementById('iN').focus(); return; }
+  if (!sCat) { toast('Pilih kategori dulu', 'error'); return; }
+  if (!isi && !isValidImageUrl(sFileBase64) && !sVideoEmbed) { toast('Isi karya wajib diisi', 'error'); document.getElementById('iI').focus(); return; }
+
+  isSubmitting = true;
+  disablePanelInputs(true);
+  var overlay = document.getElementById('submitOverlay');
+  var stepsEl = document.getElementById('driveSteps');
+  overlay.classList.add('active');
+  document.getElementById('bSI').className = 'sp-in';
+  document.getElementById('bST').textContent = 'Mengirim...';
+
+  /* Simpan nama terakhir */
+  localStorage.setItem('mading_last_name', nama);
+
+  function saveToFirebase(imageUrl) {
+    setDriveStep('ds3', 'active');
+    var data = {
+      nama: nama,
+      kategori: sCat,
+      judul: judul,
+      isi: isi,
+      gambar: imageUrl || '',
+      videoUrl: sVideoUrl,
+      videoEmbed: sVideoEmbed,
+      timestamp: Date.now(),
+      likes: 0,
+      comments: {}
+    };
+    db.ref('karya').push(data)
+    .then(function() {
+      setDriveStep('ds3', 'done');
+      document.getElementById('overlayText').textContent = 'Karya berhasil dipublikasikan!';
+      setTimeout(function() {
+        overlay.classList.remove('active');
+        isSubmitting = false;
+        disablePanelInputs(false);
+        document.getElementById('bSI').className = 'fa-solid fa-paper-plane';
+        document.getElementById('bST').textContent = 'Publikasikan ke Mading';
+        /* Reset form */
+        document.getElementById('iJ').value = '';
+        document.getElementById('iI').value = '';
+        sFile = null; sFileBase64 = null; sCat = '';
+        sVideoUrl = ''; sVideoEmbed = '';
+        document.querySelectorAll('#cC .ch').forEach(function(c) { c.classList.remove('s'); });
+        document.getElementById('uP').style.display = '';
+        document.getElementById('uV').style.display = 'none';
+        clearVideoUrl();
+        setDriveStep('ds1', 'pending');
+        setDriveStep('ds2', 'pending');
+        setDriveStep('ds3', 'pending');
+        stepsEl.style.display = 'none';
+        clP();
+        toast('Karya berhasil dipublikasikan!');
+      }, 800);
+    })
+    .catch(function(err) {
+      setDriveStep('ds3', 'fail');
+      overlay.classList.remove('active');
+      isSubmitting = false;
+      disablePanelInputs(false);
+      document.getElementById('bSI').className = 'fa-solid fa-paper-plane';
+      document.getElementById('bST').textContent = 'Publikasikan ke Mading';
+      toast('Gagal menyimpan: ' + err.message, 'error');
+    });
+  }
+
+  if (sFile) {
+    stepsEl.style.display = 'block';
+    compressImage(sFile, 0.7, function(compressed) {
+      if (!compressed) {
+        overlay.classList.remove('active');
+        isSubmitting = false;
+        disablePanelInputs(false);
+        document.getElementById('bSI').className = 'fa-solid fa-paper-plane';
+        document.getElementById('bST').textContent = 'Publikasikan ke Mading';
+        toast('Gagal kompresi gambar', 'error');
+        return;
+      }
+      uploadToDrive(compressed, function(err, data) {
+        if (err || !data || !data.url) {
+          overlay.classList.remove('active');
+          isSubmitting = false;
+          disablePanelInputs(false);
+          document.getElementById('bSI').className = 'fa-solid fa-paper-plane';
+          document.getElementById('bST').textContent = 'Publikasikan ke Mading';
+          toast('Gagal upload gambar ke Drive', 'error');
+          return;
+        }
+        saveToFirebase(data.url);
       });
     });
+  } else {
+    stepsEl.style.display = 'none';
+    saveToFirebase('');
   }
 }
 
 /* ==============================================
-   MODAL BACA — GAMBAR BESAR, TIDAK KEPOTONG
-   ============================================== */
-function opR(idx) {
-  var k = KL[idx]; if (!k) return;
-  openCommentId = k.id;
-  var box = document.getElementById('rdBox');
-  var il = !!likedItems[k.id];
-
-  var html = '';
-
-  /* Gambar — BESAR, object-fit:contain, tidak kepotong */
-  if (k.imageUrl) {
-    html += renderModalImage(k.imageUrl, k.judul || 'Gambar');
-  }
-
-  /* Video di modal */
-  if (k.videoEmbed) {
-    var vBorder = k.imageUrl ? 'border-radius:0;' : 'border-radius:22px 22px 0 0;';
-    html += '<div class="video-embed-modal" style="' + vBorder + '"><iframe src="' + k.videoEmbed + '" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe></div>';
-  }
-
-  html += '<div style="padding:20px 24px 24px;">';
-
-  /* Header: avatar + nama + kategori + waktu */
-  html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">';
-  html += '<div class="ab" style="padding:3px 10px 3px 3px;"><div class="aa" style="background:' + gAC(k.nama) + ';width:28px;height:28px;font-size:11px;">' + gI(k.nama) + '</div><span style="font-size:12px;">' + escHtml(k.nama) + '</span></div>';
-  html += '<span class="tb"><i class="fa-solid ' + (cI[k.kategori] || 'fa-star') + '" style="font-size:8px;"></i> ' + (cL[k.kategori] || k.kategori) + '</span>';
-  html += '<span style="margin-left:auto;font-size:10px;color:var(--muted);font-weight:600;">' + tAgo(k.timestamp) + '</span>';
-  html += '</div>';
-
-  /* Judul */
-  if (k.judul) {
-    html += '<h2 class="ft font-extrabold" style="color:var(--fg);font-size:20px;line-height:1.3;margin-bottom:10px;">' + escHtml(k.judul) + '</h2>';
-  }
-
-  /* Isi */
-  if (k.isi) {
-    html += '<div style="font-size:14px;line-height:1.8;margin-bottom:16px;color:var(--fg);white-space:pre-line;font-weight:600;">' + escHtml(k.isi) + '</div>';
-  }
-
-  /* Sisa hari */
-  var sisa = sH(k.timestamp);
-  html += '<div class="sw" style="margin-bottom:14px;padding-bottom:14px;border-bottom:2px solid var(--border);"><i class="fa-solid fa-clock" style="font-size:9px;"></i> ' + sisa + ' hari lagi';
-  if (k.driveArchived) html += ' <span style="color:var(--glow);font-size:10px;"><i class="fa-solid fa-cloud-arrow-up mr-1"></i>Tersimpan di Drive</span>';
-  html += '</div>';
-
-  /* Tombol like */
-  html += '<div style="display:flex;align-items:center;gap:8px;padding-bottom:14px;border-bottom:2px solid var(--border);">';
-  html += '<button class="like-btn ' + (il ? 'liked' : '') + '" data-kid="' + k.id + '" onclick="toggleLike(\'' + k.id + '\', event)" style="padding:7px 16px;font-size:13px;">';
-  html += '<i class="' + (il ? 'fa-solid' : 'fa-regular') + ' fa-heart"></i><span class="like-count-display" data-kid="' + k.id + '">0</span><span> Suka</span>';
-  html += '</button></div>';
-
-  /* Komentar */
-  html += '<div class="comments-section">';
-  html += '<h4 class="ft font-bold" style="font-size:14px;margin-bottom:12px;color:var(--fg);"><i class="fa-solid fa-comments mr-2" style="color:var(--blue);font-size:13px;"></i>Komentar</h4>';
-  html += '<div id="modalCommentList"><div style="text-align:center;padding:14px;"><div class="sp" style="margin:0 auto;"></div></div></div>';
-  html += '<div class="comment-input-row">';
-  html += '<input type="text" id="commentInput_' + k.id + '" placeholder="Tulis komentar..." maxlength="500" onkeydown="if(event.key===\'Enter\')sendComment(\'' + k.id + '\')">';
-  html += '<button onclick="sendComment(\'' + k.id + '\')"><i class="fa-solid fa-paper-plane" style="font-size:12px;"></i></button>';
-  html += '</div></div>';
-
-  html += '</div>';
-
-  box.innerHTML = html;
-  document.getElementById('rdMod').classList.add('open');
-  document.body.style.overflow = 'hidden';
-
-  /* Muat like count & komentar */
-  if (db) {
-    db.ref('likes/' + k.id).once('value', function(snap) {
-      var c = snap.val() ? Object.keys(snap.val()).length : 0;
-      document.querySelectorAll('.like-count-display[data-kid="' + k.id + '"]').forEach(function(el) { el.textContent = c; });
-    });
-    db.ref('comments/' + k.id).once('value', function(snap) {
-      var kc = snap.val() || {};
-      var cl = document.getElementById('modalCommentList');
-      if (cl) renderModalComments(cl, kc, k.id);
-    });
-  }
-}
-
-function clRd() {
-  openCommentId = null;
-  document.getElementById('rdMod').classList.remove('open');
-  document.getElementById('imgFull').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-/* ==============================================
-   HAPUS KARYA
-   ============================================== */
-function delK(id, btn) {
-  var card = btn.closest('.kc');
-  if (card.querySelector('.confirm-del')) return;
-  var overlay = document.createElement('div');
-  overlay.className = 'confirm-del';
-  overlay.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="font-size:28px;color:var(--accent2);"></i>' +
-    '<p style="font-size:13px;font-weight:800;color:var(--fg);">Hapus karya ini?</p>' +
-    '<p style="font-size:11px;color:var(--muted);font-weight:600;">Tindakan ini tidak bisa dibatalkan</p>' +
-    '<div style="display:flex;gap:8px;">' +
-    '<button onclick="this.closest(\'.confirm-del\').remove()" style="padding:8px 20px;border-radius:10px;border:2px solid var(--border);background:var(--card);color:var(--muted);font-weight:700;font-size:12px;cursor:pointer;font-family:\'Nunito\',sans-serif;">Batal</button>' +
-    '<button onclick="confirmDel(\'' + id + '\')" style="padding:8px 20px;border-radius:10px;border:none;background:var(--accent2);color:#fff;font-weight:700;font-size:12px;cursor:pointer;font-family:\'Nunito\',sans-serif;">Hapus</button>' +
-    '</div>';
-  card.appendChild(overlay);
-}
-
-function confirmDel(id) {
-  if (!db) return;
-  db.ref('karya/' + id).remove();
-  db.ref('likes/' + id).remove();
-  db.ref('comments/' + id).remove();
-  tst('Karya berhasil dihapus', 'ok');
-}
-
-/* ==============================================
-   FILTER KATEGORI
+   FILTER
    ============================================== */
 function sF(el) {
   document.querySelectorAll('#fC .ch').forEach(function(c) { c.classList.remove('s'); });
   el.classList.add('s');
-  cFilter = el.dataset.f;
-  rK();
+  cFilter = el.getAttribute('data-f');
+  renderKarya();
 }
 
 /* ==============================================
-   JAM & TANGGAL
+   NOTIFIKASI
    ============================================== */
-function uClock() {
-  var n = new Date();
-  document.getElementById('cH').textContent = String(n.getHours()).padStart(2, '0');
-  document.getElementById('cM').textContent = String(n.getMinutes()).padStart(2, '0');
-  var days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-  var months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-  document.getElementById('dS').textContent = days[n.getDay()];
-  document.getElementById('dD').textContent = n.getDate() + ' ' + months[n.getMonth()] + ' ' + n.getFullYear();
+function toggleNotifPanel() {
+  notifPanelOpen = !notifPanelOpen;
+  document.getElementById('notifPanel').classList.toggle('open', notifPanelOpen);
 }
-
-/* Header shadow saat scroll */
-window.addEventListener('scroll', function() {
-  document.getElementById('mainHeader').classList.toggle('header-scrolled', window.scrollY > 10);
+document.addEventListener('click', function(e) {
+  if (notifPanelOpen && !document.getElementById('notifWrap').contains(e.target)) {
+    notifPanelOpen = false;
+    document.getElementById('notifPanel').classList.remove('open');
+  }
 });
 
+function addNotification(text) {
+  var n = { text: text, ts: Date.now(), read: false };
+  notifications.unshift(n);
+  if (notifications.length > 50) notifications = notifications.slice(0, 50);
+  saveNotifs();
+  renderNotifs();
+}
+
+function renderNotifs() {
+  var unread = notifications.filter(function(n) { return !n.read; }).length;
+  var badge = document.getElementById('notifBadge');
+  if (unread > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = unread > 9 ? '9+' : unread;
+  } else {
+    badge.style.display = 'none';
+  }
+  var list = document.getElementById('notifList');
+  if (notifications.length === 0) {
+    list.innerHTML = '<div class="notif-empty"><i class="fa-solid fa-bell-slash"></i>Belum ada notifikasi</div>';
+    return;
+  }
+  var html = '';
+  notifications.forEach(function(n, i) {
+    html += '<div class="notif-item '+(n.read?'':'unread')+'" onclick="markNotifRead('+i+')">';
+    html += '<div class="notif-icon" style="background:rgba(13,148,136,.08);color:var(--teal);"><i class="fa-solid fa-pen-nib"></i></div>';
+    html += '<div class="notif-content"><div class="notif-text">'+escHtml(n.text)+'</div>';
+    html += '<div class="notif-time">'+timeAgo(n.ts)+'</div></div></div>';
+  });
+  list.innerHTML = html;
+}
+
+function markNotifRead(i) {
+  if (notifications[i]) { notifications[i].read = true; saveNotifs(); renderNotifs(); }
+}
+function markAllRead() {
+  notifications.forEach(function(n) { n.read = true; });
+  saveNotifs(); renderNotifs();
+}
+
+function requestNotifPermission() {
+  document.getElementById('notifBanner').classList.remove('show');
+  if (!messaging) return;
+  messaging.requestPermission().then(function(p) {
+    if (p === 'granted') toast('Notifikasi diaktifkan!');
+  }).catch(function() {});
+}
+
 /* ==============================================
-   INISIALISASI
+   HEADER SCROLL SHADOW
    ============================================== */
-cAnimasi();
-uClock();
-setInterval(uClock, 10000);
+window.addEventListener('scroll', function() {
+  var h = document.getElementById('mainHeader');
+  if (window.scrollY > 10) h.classList.add('header-scrolled');
+  else h.classList.remove('header-scrolled');
+}, { passive: true });
+
+/* ==============================================
+   FIREBASE INIT
+   ============================================== */
+function initFirebase() {
+  try {
+    firebase.initializeApp(fc);
+    db = firebase.database();
+    fbOk = true;
+    document.getElementById('fbs').className = 'fbs on';
+    document.getElementById('fbt').textContent = 'Terhubung';
+
+    /* Listener karya */
+    db.ref('karya').orderByChild('timestamp').on('value', function(snap) {
+      var arr = [];
+      snap.forEach(function(child) {
+        var k = child.val();
+        k.id = child.key;
+        /* Hapus otomatis setelah 7 hari */
+        var sd = sisaHari(k.timestamp);
+        if (sd <= 0) {
+          db.ref('karya/' + child.key).remove();
+          return;
+        }
+        arr.push(k);
+      });
+      arr.reverse();
+      var prevIds = KL.map(function(k) { return k.id; });
+      var newIds = arr.map(function(k) { return k.id; });
+      /* Deteksi karya baru */
+      newIds.forEach(function(id) {
+        if (prevIds.indexOf(id) === -1) {
+          var nk = arr.find(function(k) { return k.id === id; });
+          if (nk) addNotification(nk.nama + ' menulis karya baru: ' + (nk.judul || nk.kategori));
+        }
+      });
+      KL = arr;
+      renderKarya();
+    });
+
+    /* Messaging */
+    try {
+      messaging = firebase.messaging();
+      messaging.getToken({ vapidKey: VAPID_KEY }).then(function(token) {
+        if (token) {
+          db.ref('tokens/' + token.replace(/:/g, '_')).set(true);
+        }
+      }).catch(function() {});
+      messaging.onMessage(function(payload) {
+        if (payload.data && payload.data.title) {
+          addNotification(payload.data.title);
+          toast(payload.data.title);
+        }
+      });
+      /* Tampilkan banner izin */
+      setTimeout(function() {
+        if (Notification.permission === 'default') {
+          document.getElementById('notifBanner').classList.add('show');
+          setTimeout(function() { document.getElementById('notifBanner').classList.remove('show'); }, 12000);
+        }
+      }, 3000);
+    } catch(e) {}
+
+  } catch(e) {
+    fbOk = false;
+    document.getElementById('fbs').className = 'fbs of';
+    document.getElementById('fbt').textContent = 'Gagal terhubung';
+    toast('Gagal terhubung ke server', 'error');
+  }
+}
+
+/* ==============================================
+   INIT
+   ============================================== */
+updateClock();
+setInterval(updateClock, 10000);
 updateUploadSchedule();
 setInterval(updateUploadSchedule, 60000);
-updateNotifBadge();
-renderNotifList();
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('firebase-messaging-sw.js').then(function(reg) {
-    console.log('Service Worker terdaftar:', reg.scope);
-  }).catch(function(err) { console.warn('SW gagal:', err); });
-}
+renderNotifs();
+initFirebase();
 </script>
 </body>
 </html>
